@@ -127,6 +127,23 @@ int main() {
               0, 1, 1, 0, 0,
               0, 0,-1, 1, 0;
 
+	// Matrix for CGAL must be storen in column-major order
+	// i.e. A[column][row]
+	int Array[5][4];
+	typedef Matrix<int, Dynamic, Dynamic> ColumnMatrixXi;
+
+	// Map (convert) A on Array
+	Map<ColumnMatrixXi>(&Array[0][0], 4, 5) = A;
+
+	cout << A << endl;
+	cout << "Array [0][0]: " << Array[0][0] << endl;
+	cout << "Array [0][1]: " << Array[0][1] << endl;
+        cout << "Array [0][2]: " << Array[0][2] << endl;
+        cout << "Array [0][3]: " << Array[0][3] << endl;
+        cout << "Array [1][0]: " << Array[1][0] << endl;
+        cout << "Array [1][1]: " << Array[1][1] << endl;
+        cout << "Array [1][2]: " << Array[1][2] << endl;
+        cout << "Array [1][3]: " << Array[1][3] << endl;
 
         Matrix<double, 4, 1> Q;
         Q << 2, 2, 3, -4;
