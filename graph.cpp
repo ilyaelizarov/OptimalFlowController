@@ -13,41 +13,44 @@
 using namespace boost;
 
 /* Bundled properties */
-// Flow rate in a node
-struct nodeFlowRate {
-	float m_flow;
+
+struct nodeProperties {
+	uint32_t id; // Node no.
+	double m_flow; // Flow rate in the node
 };
 
-// weights at edges
-typedef boost::property<boost::edge_weight_t, double> EdgeWeightProperty;
+struct edgeProperties {
+	uint32_t id; // Edge no.
+	double length; // Length of the branch
+};
 
-// adjacency lists: undirected and directed
-typedef adjacency_list<listS, vecS, undirectedS, nodeFlowRate, EdgeWeightProperty> MyGraph;
+// Hot part of the network without flow directions
+typedef adjacency_list<listS, vecS, undirectedS, nodeProperties, edgeProperties> HotNetworkUndir;
 
-typedef graph_traits<MyGraph>::edge_descriptor MyEdge;
-typedef graph_traits<MyGraph>::vertex_descriptor MyVertex;
+typedef graph_traits<HotNetworkUndir>::edge_descriptor Branch;
+typedef graph_traits<HotNetworkUndir>::vertex_descriptor Node;
 
 // Graph for making a loop matrix
-// 1 - 2 - 3
-//     |   |
-//     4 - 5
+// 1 - 2 - 3 - 6
+//     |   |   |
+//     4 - 5 - 7
 
 int main() {
 
 	// Undirected graph for storing input data
-	MyGraph g;
+	HotNetworkUndir g;
 
-	// Graph definition
-	add_edge(1, 2, 1, g);
-	add_edge(2, 3, 2, g);
-	add_edge(3, 4, 3, g);
-	add_edge(4, 5, 4, g);
-	add_edge(5, 2, 1, g);
+	// Populating a graph
+	add_edge(1, 2, {1, 1}, g);
+	add_edge(2, 3, {2, 2}, g);
+	add_edge(3, 4, {3, 3}, g);
+	add_edge(4, 5, {4, 4}, g);
+	add_edge(5, 2, {5, 5}, g);
 
 	// extra cycle
-	add_edge(3, 6, 2, g);
-	add_edge(6, 7, 1, g);
-	add_edge(4, 7, 2, g);
+	add_edge(3, 6, {6, 6}, g);
+	add_edge(6, 7, {7, 7}, g);
+	add_edge(4, 7, {8, 8}, g);
 
 	// Mass flow rates in the nodes
 	g[1].m_flow = 2;
@@ -60,16 +63,17 @@ int main() {
 
         write_graphviz(std::cout, g);
 
-	property_map < MyGraph, edge_weight_t >::type weight = get(edge_weight, g);
-	std::vector<MyEdge> spanning_tree;
+//	property_map<HotNetworkUndir, edge_weight_t>::type weight = get(edge_weight, g);
+	std::vector<Branch> spanning_tree;
 
-	kruskal_minimum_spanning_tree(g, std::back_inserter(spanning_tree));
+	kruskal_minimum_spanning_tree(g, std::back_inserter(spanning_tree), weight_map(get(&edgeProperties::length, g)));
 
 	std::cout << "Print the edges in the MST:" << std::endl;
-  for (std::vector<MyEdge>::iterator ei = spanning_tree.begin();
+  for (std::vector<Branch>::iterator ei = spanning_tree.begin();
        ei != spanning_tree.end(); ++ei) {
     std::cout << source(*ei, g) << " <--> " << target(*ei, g)
-      << " with weight of " << weight[*ei]
+      << " with weight of " << g[*ei].length
+      << " with id " << g[*ei].id
       << std::endl;
   }
 
