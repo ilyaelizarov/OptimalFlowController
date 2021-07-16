@@ -1,81 +1,56 @@
-/* The code takes a graph and forms an adjacency matrix A */
+/* Graph interpritation of the network */
 
+#include "graph.h"
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
-#include <boost/graph/depth_first_search.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
-
+#include <boost/range.hpp>
+#include <vector>
 #include <iostream>
-#include <stack>
 
 using namespace boost;
+using namespace std;
 
-/* Bundled properties */
+void GraphNetwork::Populate (vector<int_pair> net_edges, vector<double> net_lengths) {
+	
+	unsigned int i_length = 0;
 
-struct nodeProperties {
-	uint32_t id; // Node no.
-	double m_flow; // Flow rate in the node
-};
+	for (int_pair i_net_edge: net_edges) {
 
-struct edgeProperties {
-	uint32_t id; // Edge no.
-	double length; // Length of the branch
-};
+		add_edge(i_net_edge.first, i_net_edge.second,
+                        edgeProperties{i_length, net_lengths.at(i_length)},
+                        network);
 
-// Hot part of the network without flow directions
-typedef adjacency_list<listS, vecS, undirectedS, nodeProperties, edgeProperties> HotNetworkUndir;
-
-typedef graph_traits<HotNetworkUndir>::edge_descriptor Branch;
-typedef graph_traits<HotNetworkUndir>::vertex_descriptor Node;
-
-// Graph for making a loop matrix
-// 1 - 2 - 3 - 6
-//     |   |   |
-//     4 - 5 - 7
-
-int main() {
-
-	// Undirected graph for storing input data
-	HotNetworkUndir g;
-
-	// Populating a graph
-	add_edge(1, 2, {1, 1}, g);
-	add_edge(2, 3, {2, 2}, g);
-	add_edge(3, 4, {3, 3}, g);
-	add_edge(4, 5, {4, 4}, g);
-	add_edge(5, 2, {5, 5}, g);
-
-	// extra cycle
-	add_edge(3, 6, {6, 6}, g);
-	add_edge(6, 7, {7, 7}, g);
-	add_edge(4, 7, {8, 8}, g);
-
-	// Mass flow rates in the nodes
-	g[1].m_flow = 2;
-	g[2].m_flow = 1;
-	g[3].m_flow = -0.5;
-	g[4].m_flow = -0.5;
-	g[5].m_flow =  -2;
-	g[6].m_flow = 1;
-	g[7].m_flow = -1;
-
-        write_graphviz(std::cout, g);
-
-//	property_map<HotNetworkUndir, edge_weight_t>::type weight = get(edge_weight, g);
-	std::vector<Branch> spanning_tree;
-
-	kruskal_minimum_spanning_tree(g, std::back_inserter(spanning_tree), weight_map(get(&edgeProperties::length, g)));
-
-	std::cout << "Print the edges in the MST:" << std::endl;
-  for (std::vector<Branch>::iterator ei = spanning_tree.begin();
-       ei != spanning_tree.end(); ++ei) {
-    std::cout << source(*ei, g) << " <--> " << target(*ei, g)
-      << " with weight of " << g[*ei].length
-      << " with id " << g[*ei].id
-      << std::endl;
-  }
-
-
+		i_length++;
+	}
 }
+
+void GraphNetwork::NodesFlow(double m_flows[]) {
+
+	unsigned int i_flows = 0;
+
+	for (node i_vertex : make_iterator_range(vertices(network))) {
+
+                network[i_vertex].m_flow = m_flows[i_flows];
+                i_flows++;
+        }
+}
+
+void GraphNetwork::Print(void) {
+
+	net_edges_total = edges(network);
+
+        for (edge_iterator i_edge = net_edges_total.first;
+                        i_edge != net_edges_total.second;
+                                ++i_edge) {
+                
+		cout << source(*i_edge, network) << " <--> " 
+                     << target(*i_edge, network) << " with weight of "
+                     << network[*i_edge].length << " with id "
+                     << network[*i_edge].id << " m_flow in node "
+                     << source(*i_edge, network) << " is "
+                     << network[source(*i_edge, network)].m_flow << " m_flow in node "
+                     << target(*i_edge, network) << " is "
+                     << network[target(*i_edge, network)].m_flow << endl;
+        
+	}
+}
+
