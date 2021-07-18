@@ -22,7 +22,7 @@ int main() {
 	string length_list_str = "7, 4, 3, 4; 5,6, 10e3, 8";
 
 	// Inputs
-	double m_flows[7] = {1, 2, 3, 4, -4, -3, -3};
+	std::vector<double> m_flows = {1, 2, 3, 4, -4, -3, -3};
 
 	std::cout << "Edges list:" << std::endl;
 	std::cout << edge_list_str << std::endl;
@@ -53,17 +53,12 @@ int main() {
 	// Print graph properties
 	Graph.Print();
 
-/*       // Inputs
-        m_flows[0] = 9;
-	m_flows[1] = 8;
-        m_flows[2] = 7;
-        m_flows[3] = 6;
-        m_flows[4] = 5;
-        m_flows[5] = 4;
-        m_flows[6] = 3;
-        m_flows[7] = 2;
+        // Next inputs
+        m_flows = {5, 4, 1, 0, -8, -4, -7};
+
+        // Assign mass flow rates in the nodes
+        Graph.NodesFlow(m_flows);
 
 	Graph.Print();
-*/
 
 }

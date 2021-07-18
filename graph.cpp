@@ -23,13 +23,13 @@ void GraphNetwork::Populate (vector<int_pair> net_edges, vector<double> net_leng
 	}
 }
 
-void GraphNetwork::NodesFlow(double m_flows[]) {
+void GraphNetwork::NodesFlow(vector<double> m_flows) {
 
 	unsigned int i_flows = 0;
 
 	for (node i_vertex : make_iterator_range(vertices(network))) {
 
-                network[i_vertex].m_flow = m_flows[i_flows];
+                network[i_vertex].m_flow = m_flows.at(i_flows);
                 i_flows++;
         }
 }

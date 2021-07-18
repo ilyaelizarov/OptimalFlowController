@@ -40,7 +40,7 @@ class GraphNetwork {
 		void Populate (vector<int_pair> net_edges, vector<double> net_lengths);
 
 		// Assigns mass flow rates in nodes
-		void NodesFlow (double m_flows[]);
+		void NodesFlow (vector<double> m_flows);
 
 		// Prints network properties
 		void Print (void);
