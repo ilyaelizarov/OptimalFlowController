@@ -2,6 +2,7 @@
 
 #include "graph.h"
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/range.hpp>
 #include <vector>
 #include <iostream>
@@ -15,9 +16,14 @@ void GraphNetwork::Populate (vector<int_pair> net_edges, vector<double> net_leng
 
 	for (int_pair i_net_edge: net_edges) {
 
-		add_edge(i_net_edge.first, i_net_edge.second,
+		bool connected;
+		branch current_branch;
+
+		tie(current_branch, connected) = add_edge(i_net_edge.first, i_net_edge.second,
                         edgeProperties{i_length, net_lengths.at(i_length)},
                         network);
+
+		this->all_edges.push_back(current_branch);
 
 		i_length++;
 	}
@@ -32,6 +38,38 @@ void GraphNetwork::NodesFlow(vector<double> m_flows) {
                 network[i_vertex].m_flow = m_flows.at(i_flows);
                 i_flows++;
         }
+}
+
+void GraphNetwork::ChordsTree(void) {
+
+	kruskal_minimum_spanning_tree(network, back_inserter(this->tree), weight_map(get(&edgeProperties::length, network)));
+
+	sort(this->all_edges.begin(), this->all_edges.end());
+        sort(this->tree.begin(), this->tree.end());
+
+        set_difference(this->all_edges.begin(), this->all_edges.end(),
+		       	this->tree.begin(), this->tree.end(),
+                inserter(this->chords, chords.begin()));
+
+
+}
+
+void GraphNetwork::PrintTree(void) {
+
+	cout << "Tree:" << endl;
+	for (vector<branch>::iterator i_tree=this->tree.begin(); i_tree !=this->tree.end(); ++i_tree) {
+
+			cout << *i_tree << ' ' << network[*i_tree].id << endl;
+			
+	}
+
+	cout << "Chords: " << endl;
+        for (vector<branch>::iterator i_chord=this->chords.begin(); i_chord !=this->chords.end(); ++i_chord) {
+
+                        cout << *i_chord << ' ' << network[*i_chord].id << endl;
+        }
+
+
 }
 
 void GraphNetwork::Print(void) {

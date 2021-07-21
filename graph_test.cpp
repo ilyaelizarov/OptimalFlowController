@@ -61,4 +61,8 @@ int main() {
 
 	Graph.Print();
 
+	Graph.ChordsTree();
+
+	Graph.PrintTree();
+
 }

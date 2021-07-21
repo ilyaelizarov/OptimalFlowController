@@ -28,9 +28,14 @@ class GraphNetwork {
 	typedef adjacency_list<vecS, vecS, undirectedS, nodeProperties, edgeProperties> undir_g;
 
 	typedef graph_traits<undir_g>::vertex_descriptor node;
+	typedef graph_traits<undir_g>::edge_descriptor branch;
 	typedef graph_traits<undir_g>::edge_iterator edge_iterator;
 
 	pair<edge_iterator, edge_iterator> net_edges_total;
+
+	vector<branch> all_edges;
+	vector<branch> tree;
+	vector<branch> chords;
 
 	public:
 
@@ -44,6 +49,13 @@ class GraphNetwork {
 
 		// Prints network properties
 		void Print (void);
+
+		// Finds chords and tree
+		void ChordsTree(void);
+
+		// Prints tree
+		void PrintTree(void);
+
 };
 
 #endif
