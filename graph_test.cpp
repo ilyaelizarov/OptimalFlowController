@@ -61,8 +61,11 @@ int main() {
 
 	Graph.Print();
 
-	Graph.ChordsTree();
+	Graph.SplitTreeAndChords();
 
 	Graph.PrintTree();
 
+	std::cout << Graph.ChordAdjMatrix() << std::endl;
+
+	std::cout << Graph.TreeAdjMatrix() << std::endl;
 }

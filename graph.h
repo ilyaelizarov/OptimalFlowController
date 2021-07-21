@@ -4,10 +4,12 @@
 #define GRAPH_H
 
 #include <boost/graph/adjacency_list.hpp>
+#include <Eigen/Dense>
 #include <vector>
 
 using namespace boost;
 using namespace std;
+using namespace Eigen;
 
 class GraphNetwork {
 
@@ -37,6 +39,11 @@ class GraphNetwork {
 	vector<branch> tree;
 	vector<branch> chords;
 
+	int tree_edges_no = 0;
+	int chords_edges_no = 0;
+
+	int i_edges_global = 0;
+
 	public:
 
 		undir_g network;		
@@ -50,8 +57,12 @@ class GraphNetwork {
 		// Prints network properties
 		void Print (void);
 
-		// Finds chords and tree
-		void ChordsTree(void);
+		// Finds chords and tree edges
+		void SplitTreeAndChords(void);
+
+		// Adjacency matrix for chords and tree
+		Matrix<int, Dynamic, Dynamic> ChordAdjMatrix(void);
+                Matrix<int, Dynamic, Dynamic> TreeAdjMatrix(void);
 
 		// Prints tree
 		void PrintTree(void);
