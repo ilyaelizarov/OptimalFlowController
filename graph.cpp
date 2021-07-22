@@ -12,7 +12,7 @@ using namespace boost;
 using namespace std;
 using namespace Eigen;
 
-void GraphNetwork::Populate (vector<int_pair> net_edges, vector<double> net_lengths) {
+void GraphNetwork::Populate (vector<int_pair> net_edges, vector<double> net_diameters, vector<double> net_lengths) {
 	
 	unsigned int i_length = 0;
 
@@ -22,7 +22,7 @@ void GraphNetwork::Populate (vector<int_pair> net_edges, vector<double> net_leng
 		branch current_branch;
 
 		tie(current_branch, connected) = add_edge(i_net_edge.first, i_net_edge.second,
-                        edgeProperties{i_length, net_lengths.at(i_length)},
+                        edgeProperties{i_length, net_diameters.at(i_length), net_lengths.at(i_length)},
                         network);
 
 		this->all_edges.push_back(current_branch);
@@ -93,14 +93,40 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::ChordAdjMatrix(void) {
 
 }
 
+Matrix<double, Dynamic, 1> GraphNetwork::InitialChordsFlow(void) {
+
+	Matrix<double, Dynamic, 1> X_c_0 = Matrix<double, Dynamic, 1>::Zero(chords_edges_no, 1);
+
+	int i_chord_edges = 0;
+
+	for (vector<branch>::iterator i_chord=this->chords.begin(); i_chord !=this->chords.end(); ++i_chord) {
+
+		node source_chord = source(*i_chord, network);
+		node target_chord = target(*i_chord, network);
+		
+		if (network[source_chord].m_flow >= network[target_chord].m_flow) {
+			X_c_0(i_chord_edges, 0) = network[source_chord].m_flow;
+
+		} else {
+		
+			X_c_0(i_chord_edges, 0) = network[target_chord].m_flow;
+		
+		}
+		
+		i_chord_edges++;
+	
+	}
+
+	return X_c_0;
+
+}
+
 Matrix<int, Dynamic, Dynamic> GraphNetwork::TreeAdjMatrix(void) {
 
 	// Change this later
 	this->i_edges_global = 0;
 
         Matrix<int, Dynamic, Dynamic> A_tree = Matrix<int, Dynamic, Dynamic>::Zero(num_vertices(network), tree_edges_no) ;
-
-
 
         for (vector<branch>::iterator i_tree=this->tree.begin(); i_tree !=this->tree.end(); ++i_tree) {
 
@@ -126,6 +152,7 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::TreeAdjMatrix(void) {
         return A_tree;
 
 }
+
 
 
 /* void GraphNetwork::AdjacencyMatrix()

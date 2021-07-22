@@ -39,7 +39,6 @@ void ParseParameters::LengthList (string length_list_str, vector<double> * lengt
         sregex_token_iterator i_length(length_list_str.cbegin(), length_list_str.cend(), c_number_reg, -1);
         sregex_token_iterator i_length_last;
 
-
 	// Parsing every length number
         for(; i_length!=i_length_last; ++i_length) {
 
@@ -50,3 +49,5 @@ void ParseParameters::LengthList (string length_list_str, vector<double> * lengt
         }
 
 }
+
+void ParseParameters::DiameterList (string diameter_list_str, vector<double> * diameters_vector) {ParseParameters::LengthList(diameter_list_str, diameters_vector);}

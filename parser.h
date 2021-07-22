@@ -31,6 +31,11 @@ class ParseParameters {
 		 * E.g. 1,2, 3, 4
 		 */
 		void LengthList (string length_list_str, vector<double> * lengths_vector);
+
+		/* Parses a string with the diameters list to populate a vector with diameters for every edge
+		 * Uses the same format as for LengthList()
+		 */
+		void DiameterList (string diameter_list_str, vector<double> * diameters_vector);
 	       
 };
 
