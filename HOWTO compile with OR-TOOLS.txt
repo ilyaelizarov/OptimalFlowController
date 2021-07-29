@@ -1,0 +1,1 @@
+/usr/bin/g++ simple_lp_program.cc -std=c++17 -I../../include -I. -Wno-deprecated -DUSE_BOP -DUSE_GLOP -DUSE_BC -DUSE_CLP -DUSE_SCIP -Wl,-rpath,../../lib -L../../lib -lortools -o simple_lp_program.cc
