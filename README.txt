@@ -1,0 +1,1 @@
+Don't forget to check if .bat file has been run at least once in the console
