@@ -1,15 +1,12 @@
-#include "/home/wht/Documents/lib/or-tools_Ubuntu/include/ortools/linear_solver/linear_solver.h"
+#include "ortools/linear_solver/linear_solver.h"
 #include <vector>
 #include <cmath>
 #include <iostream>
 
 using namespace std;
+using namespace operations_research;
 
-struct OptimizationDataModel {
-	vector<vector<double>> cons
-
-
-vector<double> m_flows = {2, 2, -2, -1};
+vector<double> m_flows = {1, 2, -2, -1};
 
 vector< vector<double> > A_eq;
 vector<double> A_eq_row = {0};
@@ -84,25 +81,27 @@ for (vector< vector<double> >::iterator i_counter = A_eq.begin();
 
 }
 
-// Create a solver
-unique_ptr<MPSolver> solver(MPSolver::CreateSolver("SCIP"));
 
-// Define the decision variables
-const double infinity = solver->infinity();
+// Create a solver
+unique_ptr<MPSolver> solver(MPSolver::CreateSolver("GLOP"));
+
+// Create the tunnel constraints
+vector<double> lbounds{0.0039, 0.0039, 0.01, 0.01};
+vector<double> hbounds{2.5e7, 2.5e7, 0.1714, 0.45};
 
 vector<const MPVariable*> x(4);
 for (int i_opt_var =0; i_opt_var < 4; ++i_opt_var) {
-	x[i_opt_var] = solver->MakeIntVar(0.0, infinity, "");
+        x[i_opt_var] = solver->MakeIntVar(lbounds[i_opt_var], hbounds[i_opt_var] , "");
 }
 
-// Create the constraints
+// Create the equality constraints 
 vector<double> bounds{0, 0, 0};
 
 for (int i_constr = 0; i_constr < 3; ++i_constr) {
-	MPConstraint* constraint = solver->MakeRowConstraint(bounds[i_constr],
+	MPConstraint* constraint1 = solver->MakeRowConstraint(bounds[i_constr],
 			bounds[i_constr], "");
 	for (int i_constr_coef =0; i_constr_coef < 4; ++i_constr_coef) {
-		constraint->SetCoefficient(x[i_constr_coef],
+		constraint1->SetCoefficient(x[i_constr_coef],
 			       A_eq[i_constr][i_constr_coef]);
 	}
 }
@@ -110,10 +109,10 @@ for (int i_constr = 0; i_constr < 3; ++i_constr) {
 // Create objective function
 vector<double> obj_coeffs;
 
-obj_coeffs.push_back(m_flows[0]^3);
-obj_coeffs.push_back(m_flows[1]^3);
-obj_coeffs.push_back(m_flows[2]);
-obj_coeffs.push_back(m_flows[3]);
+obj_coeffs.push_back(pow(abs(m_flows[0]), 3));
+obj_coeffs.push_back(pow(abs(m_flows[1]), 3));
+obj_coeffs.push_back(abs(m_flows[2]));
+obj_coeffs.push_back(abs(m_flows[3]));
 
 MPObjective* objective = solver->MutableObjective();
 
@@ -126,5 +125,15 @@ objective->SetMinimization();
 // Call the solver
 const MPSolver::ResultStatus result_status = solver->Solve();
 
+// Print results
+if (result_status != MPSolver::OPTIMAL) {
+  LOG(FATAL) << "The problem does not have an optimal solution.";
+}
+LOG(INFO) << "Solution:";
+LOG(INFO) << "Optimal objective value = " << objective->Value();
+
+for (int j = 0; j < 4; ++j) {
+  LOG(INFO) << "x[" << j << "] = " << x[j]->solution_value();
+}
 
 }
