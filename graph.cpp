@@ -64,27 +64,31 @@ void GraphNetwork::SplitTreeAndChords(void) {
 
 Matrix<int, Dynamic, Dynamic> GraphNetwork::ChordAdjMatrix(void) {
 
-	this->i_edges_global = 0;
+	int i_column = 0;
 
 	Matrix<int, Dynamic, Dynamic> A_chord = Matrix<int, Dynamic, Dynamic>::Zero(num_vertices(network), chords_edges_no) ;
        
 	for (vector<branch>::iterator i_chord=this->chords.begin(); i_chord !=this->chords.end(); ++i_chord) {
 
+		chords_column_to_id.insert(pair<int, int>(i_column, network[*i_chord].id));
+
 		node source_chord = source(*i_chord, network);
 		node target_chord = target(*i_chord, network);
 
+//		cout << "Flow rate in the source: " << network[source_chord].m_flow << endl;
+
 		if (network[source_chord].m_flow >= network[target_chord].m_flow) {
 
-			A_chord(source_chord, this->i_edges_global) = 1;
-			A_chord(target_chord, this->i_edges_global) = -1;
+			A_chord(source_chord, i_column) = 1;
+			A_chord(target_chord, i_column) = -1;
 
 		} else {
 			
-			A_chord(source_chord, this->i_edges_global) = -1;
-                        A_chord(target_chord, this->i_edges_global) = 1;
+			A_chord(source_chord, i_column) = -1;
+                        A_chord(target_chord, i_column) = 1;
 		}
 
-		this->i_edges_global++;
+		i_column++;
 
 	}
 
@@ -97,7 +101,7 @@ Matrix<double, Dynamic, 1> GraphNetwork::InitialChordsFlow(void) {
 
 	Matrix<double, Dynamic, 1> X_c_0 = Matrix<double, Dynamic, 1>::Zero(chords_edges_no, 1);
 
-	int i_chord_edges = 0;
+	int i_edges_chord = 0;
 
 	for (vector<branch>::iterator i_chord=this->chords.begin(); i_chord !=this->chords.end(); ++i_chord) {
 
@@ -105,15 +109,15 @@ Matrix<double, Dynamic, 1> GraphNetwork::InitialChordsFlow(void) {
 		node target_chord = target(*i_chord, network);
 		
 		if (network[source_chord].m_flow >= network[target_chord].m_flow) {
-			X_c_0(i_chord_edges, 0) = network[source_chord].m_flow;
+			X_c_0(i_edges_chord, 0) = network[source_chord].m_flow;
 
 		} else {
 		
-			X_c_0(i_chord_edges, 0) = network[target_chord].m_flow;
+			X_c_0(i_edges_chord, 0) = network[target_chord].m_flow;
 		
 		}
 		
-		i_chord_edges++;
+		i_edges_chord++;
 	
 	}
 
@@ -123,28 +127,33 @@ Matrix<double, Dynamic, 1> GraphNetwork::InitialChordsFlow(void) {
 
 Matrix<int, Dynamic, Dynamic> GraphNetwork::TreeAdjMatrix(void) {
 
-	// Change this later
-	this->i_edges_global = 0;
+	// it is indeed a node number as well!
+	int i_column = 0;
 
         Matrix<int, Dynamic, Dynamic> A_tree = Matrix<int, Dynamic, Dynamic>::Zero(num_vertices(network), tree_edges_no) ;
 
         for (vector<branch>::iterator i_tree=this->tree.begin(); i_tree !=this->tree.end(); ++i_tree) {
 
+                tree_column_to_id.insert(pair<int, int>(i_column, network[*i_tree].id));
+
+		cout << "Column " << i_column << " corresponds to edge " << network[*i_tree].id << endl;
+
                 node source_tree = source(*i_tree, network);
                 node target_tree = target(*i_tree, network);
 
+
                 if (network[source_tree].m_flow >= network[target_tree].m_flow) {
 
-                        A_tree(source_tree, this->i_edges_global) = 1;
-                        A_tree(target_tree, this->i_edges_global) = -1;
+                        A_tree(source_tree, i_column) = 1;
+                        A_tree(target_tree, i_column) = -1;
 
                 } else {
 
-                        A_tree(source_tree, this->i_edges_global) = -1;
-                       A_tree(target_tree, this->i_edges_global) = 1;
+                        A_tree(source_tree, i_column) = -1;
+                       A_tree(target_tree, i_column) = 1;
                 }
 
-                this->i_edges_global++;
+                i_column++;
 
         }
 
@@ -152,16 +161,6 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::TreeAdjMatrix(void) {
         return A_tree;
 
 }
-
-
-
-/* void GraphNetwork::AdjacencyMatrix()
- * 
- * 1. Iterate through tree edges e.g. in PrintTree()
- * 1.1 Compare m_flow in source and target vertexes
- * 1.2 Write in A matrix for column with edge.id put 1, -1 in rows that correspond to vertixes
- * 2. Iterate through chord edges
- */
 
 void GraphNetwork::PrintTree(void) {
 
