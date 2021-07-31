@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+	fmiVersion="2.0"
+	modelName="ShowParameters"
+	guid="{60bd8c77-f12e-11eb-af98-901b0e2a74b8}"
+	version="1.0.0"
+	author="not specified"
+	copyright="not specified"
+	license="not specified"
+	description="This model parses a parameter string with three numbers and transmits every number to its corresponding output"
+	generationTool="ghorwin/FMICodeGenerator@github - C++ Code using FMI support functions from IBK@TU Dresden"
+	generationDateAndTime="2021-07-30T02:05:05Z"
+	variableNamingConvention="structured"
+	numberOfEventIndicators="0">
+
+	<!-- The following properties are the defaults and can be omitted
+		needsExecutionTool="false"
+		canBeInstantiatedOnlyOncePerProcess="false"
+		providesDirectionalDerivative="false"
+
+		CoSim only:
+		canRunAsynchronuously = "false"
+
+	-->
+
+	<ModelExchange
+		modelIdentifier="ShowParameters"
+		completedIntegratorStepNotNeeded="true"
+		canNotUseMemoryManagementFunctions="true"
+		canGetAndSetFMUstate="true"
+		canSerializeFMUstate="true"
+	/>
+
+	<CoSimulation
+		modelIdentifier="ShowParameters"
+		canHandleVariableCommunicationStepSize="true"
+		canInterpolateInputs="false"
+		maxOutputDerivativeOrder="0"
+		canNotUseMemoryManagementFunctions="true"
+		canGetAndSetFMUstate="true"
+		canSerializeFMUstate="true"
+	/>
+
+	<LogCategories>
+		<Category name="logStatusWarning" />
+		<Category name="logStatusError" />
+		<Category name="logAll" />
+		<Category name="logFmi2Call" />
+	</LogCategories>
+
+	<DefaultExperiment startTime="0.0" stopTime="10.0" tolerance="1e-06"/>
+
+	<ModelVariables>
+
+		<!-- For input variables we need to give a 'start' attribute -->
+		<!-- For output variables with initial="exact" we need to give a 'start' attribute -->
+		
+
+		<!-- Index of variable = "1" -->
+		<ScalarVariable
+			name="La"
+            description="Parameter 1"
+			valueReference="1"
+			variability="continuous"
+			causality="output"
+			initial="calculated">
+			<Real/>
+		</ScalarVariable>		
+		
+
+		<!-- Index of variable = "2" -->
+		<ScalarVariable
+			name="Lb"
+            description="Parameter 2"
+			valueReference="2"
+			variability="continuous"
+			causality="output"
+			initial="calculated">
+			<Real/>
+		</ScalarVariable>		
+		
+
+		<!-- Index of variable = "3" -->
+		<ScalarVariable
+			name="Lc"
+            description="Parameter 3"
+			valueReference="3"
+			variability="continuous"
+			causality="output"
+			initial="calculated">
+			<Real/>
+		</ScalarVariable>		
+		
+
+		<!-- Index of variable = "4" -->
+		<ScalarVariable
+			name="Lengths"
+			valueReference="4"
+			variability="fixed"
+			causality="parameter"
+			initial="exact">
+			<String start="1, 2, 3"/>
+		</ScalarVariable>		
+		
+
+	</ModelVariables>
+
+	<ModelStructure>
+		<Outputs>
+			<!-- dependencies must be defined for all output quantities. 'dependencyKind' is only needed
+				when some dependencies are constant factors or parameters.
+			-->
+			
+			<Unknown index="1" dependencies=""/>
+		
+			<Unknown index="2" dependencies=""/>
+		
+			<Unknown index="3" dependencies=""/>
+		
+
+		</Outputs>
+	</ModelStructure>
+
+</fmiModelDescription>
+
