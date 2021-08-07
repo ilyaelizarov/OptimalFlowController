@@ -47,13 +47,16 @@ class GraphNetwork {
 
 	public:
 
-		undir_g network;		
+		undir_g network;
 
 		// Populates network graph and assigns edges properties (length, index
 		void Populate (vector<int_pair> net_edges, vector<double> net_diameters, vector<double> net_lengths);
 
 		// Assigns mass flow rates in nodes
-		void NodesFlow (vector<double> m_flows);
+		void SetNodesFlow (vector<double> m_flows);
+
+		// Get the vector of flow rates in the nodes
+		Matrix<double, Dynamic, 1> GetNodesFlow (void);
 
 		// Prints network properties
 		void Print (void);
@@ -62,11 +65,11 @@ class GraphNetwork {
 		void SplitTreeAndChords(void);
 
 		// Adjacency matrix for chords and tree
-		Matrix<int, Dynamic, Dynamic> ChordAdjMatrix(void);
-                Matrix<int, Dynamic, Dynamic> TreeAdjMatrix(void);
+		Matrix<int, Dynamic, Dynamic> GetChordAdjMatrix(void);
+                Matrix<int, Dynamic, Dynamic> GetTreeAdjMatrix(void);
 
 		// Gets initial flow rate values in chords
-		Matrix<double, Dynamic, 1> InitialChordsFlow(void);  
+		Matrix<double, Dynamic, 1> GetInitialChordsFlow(void);  
 
 		// Prints tree
 		void PrintTree(void);

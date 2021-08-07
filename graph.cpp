@@ -31,7 +31,7 @@ void GraphNetwork::Populate (vector<int_pair> net_edges, vector<double> net_diam
 	}
 }
 
-void GraphNetwork::NodesFlow(vector<double> m_flows) {
+void GraphNetwork::SetNodesFlow(vector<double> m_flows) {
 
 	unsigned int i_flows = 0;
 
@@ -42,6 +42,24 @@ void GraphNetwork::NodesFlow(vector<double> m_flows) {
         }
 }
 
+Matrix<double, Dynamic, 1> GraphNetwork::GetNodesFlow(void) {
+
+	unsigned int i_row = 0;
+
+	Matrix<double, Dynamic, 1> Q = Matrix<double, Dynamic, 1>::Zero(num_vertices(network), 1);
+
+	for (node i_vertex : make_iterator_range(vertices(network))) {
+
+		Q(i_vertex, 0) = network[i_vertex].m_flow;
+		
+		i_row++;
+	}
+
+	return Q;
+
+}
+
+		
 void GraphNetwork::SplitTreeAndChords(void) {
 
 	this->tree_edges_no = 0;
@@ -62,7 +80,7 @@ void GraphNetwork::SplitTreeAndChords(void) {
 
 }
 
-Matrix<int, Dynamic, Dynamic> GraphNetwork::ChordAdjMatrix(void) {
+Matrix<int, Dynamic, Dynamic> GraphNetwork::GetChordAdjMatrix(void) {
 
 	int i_column = 0;
 
@@ -70,7 +88,7 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::ChordAdjMatrix(void) {
        
 	for (vector<branch>::iterator i_chord=this->chords.begin(); i_chord !=this->chords.end(); ++i_chord) {
 
-		chords_column_to_id.insert(pair<int, int>(i_column, network[*i_chord].id));
+//		chords_column_to_id.insert(pair<int, int>(i_column, network[*i_chord].id));
 
 		node source_chord = source(*i_chord, network);
 		node target_chord = target(*i_chord, network);
@@ -97,7 +115,7 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::ChordAdjMatrix(void) {
 
 }
 
-Matrix<double, Dynamic, 1> GraphNetwork::InitialChordsFlow(void) {
+Matrix<double, Dynamic, 1> GraphNetwork::GetInitialChordsFlow(void) {
 
 	Matrix<double, Dynamic, 1> X_c_0 = Matrix<double, Dynamic, 1>::Zero(chords_edges_no, 1);
 
@@ -125,7 +143,7 @@ Matrix<double, Dynamic, 1> GraphNetwork::InitialChordsFlow(void) {
 
 }
 
-Matrix<int, Dynamic, Dynamic> GraphNetwork::TreeAdjMatrix(void) {
+Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
 	// it is indeed a node number as well!
 	int i_column = 0;
@@ -134,7 +152,7 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::TreeAdjMatrix(void) {
 
         for (vector<branch>::iterator i_tree=this->tree.begin(); i_tree !=this->tree.end(); ++i_tree) {
 
-                tree_column_to_id.insert(pair<int, int>(i_column, network[*i_tree].id));
+//                tree_column_to_id.insert(pair<int, int>(i_column, network[*i_tree].id));
 
 		cout << "Column " << i_column << " corresponds to edge " << network[*i_tree].id << endl;
 

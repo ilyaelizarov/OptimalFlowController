@@ -54,7 +54,7 @@ int main() {
 	Graph.Populate(net_edges, net_diameters, net_lengths);
 	
 	// Assign mass flow rates in the nodes
-	Graph.NodesFlow(m_flows);
+	Graph.SetNodesFlow(m_flows);
 
 	std::cout << std::endl;
 
@@ -65,7 +65,7 @@ int main() {
         m_flows = {5, 4, 6, 10, -8, -4, -7};
 
         // Assign mass flow rates in the nodes
-        Graph.NodesFlow(m_flows);
+        Graph.SetNodesFlow(m_flows);
 
 	Graph.Print();
 
@@ -73,10 +73,14 @@ int main() {
 
 	Graph.PrintTree();
 
-	std::cout << Graph.ChordAdjMatrix() << std::endl;
+	std::cout << Graph.GetChordAdjMatrix() << std::endl;
 
-	std::cout << Graph.TreeAdjMatrix() << std::endl;
+	std::cout << Graph.GetTreeAdjMatrix() << std::endl;
 
-	std::cout << Graph.InitialChordsFlow();
+	std::cout << Graph.GetInitialChordsFlow() << std::endl;
+
+	std::cout << "Q:" << std::endl;
+
+	std::cout << Graph.GetNodesFlow() << std::endl;
 
 }
