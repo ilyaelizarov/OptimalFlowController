@@ -55,7 +55,7 @@ class GraphNetwork {
 		// Assigns mass flow rates in nodes
 		void SetNodesFlow (vector<double> m_flows);
 
-		// Get the vector of flow rates in the nodes
+		// Gets the vector of flow rates in the nodes
 		Matrix<double, Dynamic, 1> GetNodesFlow (void);
 
 		// Prints network properties
@@ -64,12 +64,15 @@ class GraphNetwork {
 		// Finds chords and tree edges
 		void SplitTreeAndChords(void);
 
-		// Adjacency matrix for chords and tree
+		// Gets adjacency matrix for chords and tree
 		Matrix<int, Dynamic, Dynamic> GetChordAdjMatrix(void);
                 Matrix<int, Dynamic, Dynamic> GetTreeAdjMatrix(void);
 
 		// Gets initial flow rate values in chords
-		Matrix<double, Dynamic, 1> GetInitialChordsFlow(void);  
+		Matrix<double, Dynamic, 1> GetInitialChordsFlow(void);
+
+		// Gets loop matrix
+		void GetLoopMatrix(void);  
 
 		// Prints tree
 		void PrintTree(void);

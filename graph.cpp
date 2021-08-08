@@ -1,6 +1,7 @@
 /* Graph interpritation of the network */
 
 #include "graph.h"
+#include "udgcd.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/range.hpp>
@@ -177,6 +178,12 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
 
         return A_tree;
+
+}
+
+void GraphNetwork::GetLoopMatrix(void) {
+
+	vector<vector<node>> cycles = udgcd::findCycles<undir_g, node>(network);
 
 }
 
