@@ -100,11 +100,15 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetChordAdjMatrix(void) {
 
 			A_chord(source_chord, i_column) = 1;
 			A_chord(target_chord, i_column) = -1;
+			network[*i_chord].source = source_chord;
+			network[*i_chord].target = target_chord;
 
 		} else {
 			
 			A_chord(source_chord, i_column) = -1;
                         A_chord(target_chord, i_column) = 1;
+			network[*i_chord].source = target_chord;
+			network[*i_chord].target = source_chord;
 		}
 
 		i_column++;
@@ -165,11 +169,18 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
                         A_tree(source_tree, i_column) = 1;
                         A_tree(target_tree, i_column) = -1;
+                        network[*i_tree].source = source_tree;
+                        network[*i_tree].target = target_tree;
+
 
                 } else {
 
-                        A_tree(source_tree, i_column) = -1;
+                       A_tree(source_tree, i_column) = -1;
                        A_tree(target_tree, i_column) = 1;
+                       network[*i_tree].source = target_tree;
+                       network[*i_tree].target = source_tree;
+
+
                 }
 
                 i_column++;
@@ -183,13 +194,15 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
 void GraphNetwork::GetLoopMatrix(void) {
 
+	unsigned int i_cycle = 0;
+
 	// set null output
 	streambuf * orig_buf = cout.rdbuf();
     	cout.rdbuf(NULL);
 
 	vector<vector<node>> cycles = udgcd::findCycles<undir_g, node>(network);
 
-	// restore buffer
+	// restore output
 	cout.rdbuf(orig_buf);
 
 	for (vector< vector<node> >::iterator i_column = cycles.begin();
@@ -200,9 +213,12 @@ void GraphNetwork::GetLoopMatrix(void) {
 					i_row++) {
 
 			cout << *i_row << ' ';
+			
+
 		}
 	
-		cout << endl;	
+		cout << endl;
+		i_cycle++;
 	}
 
 }

@@ -25,14 +25,16 @@ class GraphNetwork {
         	unsigned int id; // Edge no.
 		double diameter; // Edge diameter
         	double length; // Length of the edge
+		unsigned int source;
+		unsigned int target;
 	};
-	
-	// Undirected graph type
-	typedef adjacency_list<vecS, vecS, undirectedS, nodeProperties, edgeProperties> undir_g;
 
-	typedef graph_traits<undir_g>::vertex_descriptor node;
-	typedef graph_traits<undir_g>::edge_descriptor branch;
-	typedef graph_traits<undir_g>::edge_iterator edge_iterator;
+        // Undirected graph type
+        typedef adjacency_list<vecS, vecS, undirectedS, nodeProperties, edgeProperties> undir_g;
+
+        typedef graph_traits<undir_g>::vertex_descriptor node;
+        typedef graph_traits<undir_g>::edge_descriptor branch;
+        typedef graph_traits<undir_g>::edge_iterator edge_iterator;
 
 	pair<edge_iterator, edge_iterator> net_edges_total;
 
