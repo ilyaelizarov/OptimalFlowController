@@ -83,4 +83,6 @@ int main() {
 
 	std::cout << Graph.GetNodesFlow() << std::endl;
 
+	Graph.GetLoopMatrix();
+
 }

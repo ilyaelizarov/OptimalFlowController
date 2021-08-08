@@ -183,7 +183,27 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
 void GraphNetwork::GetLoopMatrix(void) {
 
+	// set null output
+	streambuf * orig_buf = cout.rdbuf();
+    	cout.rdbuf(NULL);
+
 	vector<vector<node>> cycles = udgcd::findCycles<undir_g, node>(network);
+
+	// restore buffer
+	cout.rdbuf(orig_buf);
+
+	for (vector< vector<node> >::iterator i_column = cycles.begin();
+			i_column != cycles.end(); i_column++) {
+
+		for (vector<node>::iterator i_row = (*i_column).begin();
+				i_row != (*i_column).end();
+					i_row++) {
+
+			cout << *i_row << ' ';
+		}
+	
+		cout << endl;	
+	}
 
 }
 
