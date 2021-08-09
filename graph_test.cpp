@@ -73,9 +73,15 @@ int main() {
 
 	Graph.PrintTree();
 
+	std::cout << "A_chord: " << std::endl;
+
 	std::cout << Graph.GetChordAdjMatrix() << std::endl;
 
+	std::cout << "A_tree: " << std::endl;
+
 	std::cout << Graph.GetTreeAdjMatrix() << std::endl;
+
+	std::cout << "X_c_0: " << std::endl;
 
 	std::cout << Graph.GetInitialChordsFlow() << std::endl;
 
@@ -83,6 +89,8 @@ int main() {
 
 	std::cout << Graph.GetNodesFlow() << std::endl;
 
-	Graph.GetLoopMatrix();
+	std::cout << "B: " << std::endl;
+
+	std::cout << Graph.GetLoopMatrix() << std::endl;
 
 }

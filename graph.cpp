@@ -101,14 +101,14 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetChordAdjMatrix(void) {
 			A_chord(source_chord, i_column) = 1;
 			A_chord(target_chord, i_column) = -1;
 			network[*i_chord].source = source_chord;
-			network[*i_chord].target = target_chord;
+			// network[*i_chord].target = target_chord;
 
 		} else {
 			
 			A_chord(source_chord, i_column) = -1;
                         A_chord(target_chord, i_column) = 1;
 			network[*i_chord].source = target_chord;
-			network[*i_chord].target = source_chord;
+			// network[*i_chord].target = source_chord;
 		}
 
 		i_column++;
@@ -170,7 +170,7 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
                         A_tree(source_tree, i_column) = 1;
                         A_tree(target_tree, i_column) = -1;
                         network[*i_tree].source = source_tree;
-                        network[*i_tree].target = target_tree;
+                        // network[*i_tree].target = target_tree;
 
 
                 } else {
@@ -178,7 +178,7 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
                        A_tree(source_tree, i_column) = -1;
                        A_tree(target_tree, i_column) = 1;
                        network[*i_tree].source = target_tree;
-                       network[*i_tree].target = source_tree;
+                       // network[*i_tree].target = source_tree;
 
 
                 }
@@ -192,9 +192,15 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
 }
 
-void GraphNetwork::GetLoopMatrix(void) {
+Matrix<int, Dynamic, Dynamic> GraphNetwork::GetLoopMatrix(void) {
 
 	unsigned int i_cycle = 0;
+	unsigned int i_vertex = 0;
+
+	node first_node_cycle;
+
+	pair<node, node> verteces;
+	branch branch;
 
 	// set null output
 	streambuf * orig_buf = cout.rdbuf();
@@ -205,6 +211,8 @@ void GraphNetwork::GetLoopMatrix(void) {
 	// restore output
 	cout.rdbuf(orig_buf);
 
+        Matrix<int, Dynamic, Dynamic> B = Matrix<int, Dynamic, Dynamic>::Zero(cycles.size(), num_edges(network)) ;
+
 	for (vector< vector<node> >::iterator i_column = cycles.begin();
 			i_column != cycles.end(); i_column++) {
 
@@ -212,15 +220,88 @@ void GraphNetwork::GetLoopMatrix(void) {
 				i_row != (*i_column).end();
 					i_row++) {
 
-			cout << *i_row << ' ';
-			
+			i_vertex++;
 
+			if (i_vertex == 1) {
+
+				first_node_cycle = *i_row;
+				verteces.first = *i_row;
+
+			} else if (i_vertex % 2 == 0) {
+				
+				verteces.second = *i_row;
+
+				// Inspect an edge
+				// cout << "(" << verteces.first << "," << verteces.second << ")" << endl;
+				branch = edge(verteces.first, verteces.second, network).first;
+				// cout << "Investigated edge is: " << network[branch].id << endl;
+				if (network[branch].source == verteces.first) {
+
+					B(i_cycle, network[branch].id) = 1;
+
+				} else {
+
+					B(i_cycle, network[branch].id) = -1;
+				};
+
+
+				verteces.first = *i_row;
+
+			} else if (i_vertex % 3 == 0) {
+
+				verteces.second = *i_row;
+
+				// Inspect an edge
+                                // cout << "(" << verteces.first << "," << verteces.second << ")" << endl;
+                                branch = edge(verteces.first, verteces.second, network).first;
+                                // cout << "Investigated edge is: " << network[branch].id << endl;
+                                if (network[branch].source == verteces.first) {
+
+                                        B(i_cycle, network[branch].id) = 1;
+
+                                } else {
+
+                                        B(i_cycle, network[branch].id) = -1;
+                                };
+
+
+				
+				verteces.first = *i_row;
+
+			};
+
+
+			if ( i_row == (*i_column).end() - 1) {
+
+				verteces.second = first_node_cycle;
+				verteces.first = *i_row;
+				
+				// Inspect an edge
+                                // cout << "(" << verteces.first << "," << verteces.second << ")" << endl;
+                                branch = edge(verteces.first, verteces.second, network).first;
+                                // cout << "Investigated edge is: " << network[branch].id << endl;
+                                if (network[branch].source == verteces.first) {
+
+                                        B(i_cycle, network[branch].id) = 1;
+
+                                } else {
+
+                                        B(i_cycle, network[branch].id) = -1;
+                                };
+
+
+
+			}
+
+			 // cout << "Node in the cycle: " << *i_row << endl;
 		}
-	
-		cout << endl;
+
+		i_vertex = 0;
+		// cout << "New cycle" << endl;
 		i_cycle++;
 	}
 
+	return B;
 }
 
 void GraphNetwork::PrintTree(void) {

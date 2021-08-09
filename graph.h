@@ -26,7 +26,7 @@ class GraphNetwork {
 		double diameter; // Edge diameter
         	double length; // Length of the edge
 		unsigned int source;
-		unsigned int target;
+		// unsigned int target;
 	};
 
         // Undirected graph type
@@ -45,7 +45,7 @@ class GraphNetwork {
 	int tree_edges_no = 0;
 	int chords_edges_no = 0;
 
-	int i_edges_global = 0;
+	// int i_edges_global = 0;
 
 	public:
 
@@ -74,7 +74,7 @@ class GraphNetwork {
 		Matrix<double, Dynamic, 1> GetInitialChordsFlow(void);
 
 		// Gets loop matrix
-		void GetLoopMatrix(void);  
+		Matrix<int, Dynamic, Dynamic> GetLoopMatrix(void);  
 
 		// Prints tree
 		void PrintTree(void);
