@@ -1,5 +1,6 @@
 /* Populates a network graph from edges and lengths lists */
 
+#include "numerical.h"
 #include "parser.h"
 #include "graph.h"
 #include <boost/graph/adjacency_list.hpp>
@@ -92,5 +93,10 @@ int main() {
 	std::cout << "B: " << std::endl;
 
 	std::cout << Graph.GetLoopMatrix() << std::endl;
+
+	Newton NumericalMethods;
+
+	std::cout << NumericalMethods.GetFlowTree(Graph.GetTreeAdjMatrix(), Graph.GetChordAdjMatrix(),
+			Graph.GetNodesFlow(), Graph.GetInitialChordsFlow()) << std::endl;
 
 }
