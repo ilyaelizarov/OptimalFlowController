@@ -2,6 +2,7 @@
  * with the Newton's method */
 
 #include "numerical.h"
+#include "graph.h"
 #include <iostream>
 #include <vector>
 #include <Eigen/Dense>
@@ -39,7 +40,27 @@ Matrix<double, Dynamic, 1> Newton::GetFlowTree(Matrix<int, Dynamic, Dynamic> Adj
 
         NodesFlowVec.conservativeResize(num_rows, num_cols);
 
-        return AdjTreeMat.cast<double>().inverse()*(NodesFlowVec - AdjChordMat.cast<double>()*ChordsFlowVec);
+	// Solve for X_tree
+	Matrix<double, Dynamic, 1> X_tree_unsorted = AdjTreeMat.cast<double>().inverse()*(NodesFlowVec - AdjChordMat.cast<double>()*ChordsFlowVec);
+
+	unsigned int tree_num = AdjTreeMat.cols();
+	unsigned int chords_num = AdjChordMat.cols();
+
+	Matrix<double, Dynamic, 1> X = Matrix<double, Dynamic, 1>::Zero(tree_num+chords_num, 1);
+
+	for (unsigned int i_branch = 0; i_branch != tree_num; i_branch++) {
+
+		X(GraphNetwork::tree_column_to_id[i_branch],0) = X_tree_unsorted(i_branch, 0);
+	
+	};
+
+	for (unsigned int i_branch = 0; i_branch != chords_num; i_branch++) {
+
+		X(GraphNetwork::chords_column_to_id[i_branch],0) = ChordsFlowVec(i_branch, 0);
+
+	}
+
+        return X;
 
 }
 

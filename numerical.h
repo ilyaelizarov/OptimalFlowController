@@ -24,10 +24,13 @@ class Newton {
                            Matrix<double, Dynamic, 1> FlowRateVec,
                            Matrix<double, Dynamic, 1> ResVec);
 
-		// Calculates flow rates in the tree
-		// X_tree = A_tree^-1 (Q - A_chords * X_chords)
-		// Arguments are adjacency matrices for a tree, chords, the flow rate in nodes
-		// The function will through the last row itself 
+		/* Calculates flow rates in the tree
+		 * X_tree = A_tree^-1 (Q - A_chords * X_chords)
+		 * and adds flow rates in the chords from the arguments:
+		 * X_tree + X_chords
+		 * Arguments are adjacency matrices for a tree, chords, the flow rate in nodes
+		 * The function will through the last row itself
+		 */ 
 		Matrix<double, Dynamic, 1> GetFlowTree(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
                 Matrix<int, Dynamic, Dynamic> AdjChordMat,
                 Matrix<double, Dynamic, 1>  NodesFlowVec,

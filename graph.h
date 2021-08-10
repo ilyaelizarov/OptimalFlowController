@@ -6,6 +6,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <Eigen/Dense>
 #include <vector>
+#include <map>
 
 using namespace boost;
 using namespace std;
@@ -45,9 +46,10 @@ class GraphNetwork {
 	int tree_edges_no = 0;
 	int chords_edges_no = 0;
 
-	// int i_edges_global = 0;
-
 	public:
+
+	        static map <unsigned int, unsigned int>tree_column_to_id;
+                static map <unsigned int, unsigned int>chords_column_to_id;
 
 		undir_g network;
 

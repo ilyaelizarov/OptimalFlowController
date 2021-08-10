@@ -7,11 +7,16 @@
 #include <boost/range.hpp>
 #include <Eigen/Dense>
 #include <vector>
+#include <map>
 #include <iostream>
 
 using namespace boost;
 using namespace std;
 using namespace Eigen;
+
+
+map<unsigned int, unsigned int> GraphNetwork::tree_column_to_id;
+map<unsigned int, unsigned int> GraphNetwork::chords_column_to_id;
 
 void GraphNetwork::Populate (vector<int_pair> net_edges, vector<double> net_diameters, vector<double> net_lengths) {
 	
@@ -89,7 +94,7 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetChordAdjMatrix(void) {
        
 	for (vector<branch>::iterator i_chord=this->chords.begin(); i_chord !=this->chords.end(); ++i_chord) {
 
-//		chords_column_to_id.insert(pair<int, int>(i_column, network[*i_chord].id));
+                chords_column_to_id.insert(pair<int, int>(i_column, network[*i_chord].id));
 
 		node source_chord = source(*i_chord, network);
 		node target_chord = target(*i_chord, network);
@@ -150,16 +155,15 @@ Matrix<double, Dynamic, 1> GraphNetwork::GetInitialChordsFlow(void) {
 
 Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
-	// it is indeed a node number as well!
 	int i_column = 0;
 
         Matrix<int, Dynamic, Dynamic> A_tree = Matrix<int, Dynamic, Dynamic>::Zero(num_vertices(network), tree_edges_no) ;
 
         for (vector<branch>::iterator i_tree=this->tree.begin(); i_tree !=this->tree.end(); ++i_tree) {
 
-//                tree_column_to_id.insert(pair<int, int>(i_column, network[*i_tree].id));
+                tree_column_to_id.insert(pair<int, int>(i_column, network[*i_tree].id));
 
-		cout << "Column " << i_column << " corresponds to edge " << network[*i_tree].id << endl;
+		cout << "Column " << i_column << " corresponds to edge " << tree_column_to_id[i_column] << endl;
 
                 node source_tree = source(*i_tree, network);
                 node target_tree = target(*i_tree, network);
