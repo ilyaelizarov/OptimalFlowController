@@ -15,7 +15,7 @@ class Newton {
 		// Solves linearized system 2*B*S*X(N)*B^T*dX_k(N) = -dH for dX_k
 		Matrix<double, Dynamic, 1> SolveFlowChords(Matrix<int, Dynamic, Dynamic> LoopMat,
                            DiagonalMatrix<double, Dynamic> ResMat,
-                           DiagonalMatrix<double, Dynamic> FlowRateMat,
+                           Matrix<double, Dynamic, 1> FlowRateMat,
                            Matrix<double, Dynamic, 1> DisVec) const;
 
 	public:
@@ -32,7 +32,7 @@ class Newton {
 		 * Arguments are adjacency matrices for a tree, chords, the flow rate in nodes
 		 * The function will through the last row itself
 		 */ 
-		Matrix<double, Dynamic, 1> GetFlowTree(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
+		Matrix<double, Dynamic, 1> GetFlowBranches(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
                 Matrix<int, Dynamic, Dynamic> AdjChordMat,
                 Matrix<double, Dynamic, 1>  NodesFlowVec,
 		Matrix<double, Dynamic, 1> ChordsFlowVec);
@@ -46,6 +46,18 @@ class Newton {
                 	Matrix<double, Dynamic, 1> FlowRateVec,
                 	vector<double> * BranchesDiameter,
                 	vector<double> * BranchesLength);
+
+		// Iterates to find a solution for flow rates in all branches
+		Matrix<double, Dynamic, 1> Solve(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
+                                         Matrix<int, Dynamic, Dynamic> AdjChordMat,
+                                         Matrix<int, Dynamic, Dynamic> LoopMat,
+                                         DiagonalMatrix<double, Dynamic> ResMat,
+
+                                         Matrix<double, Dynamic, 1> NodesFlowVec,
+                                         Matrix<double, Dynamic, 1> InitialChordsFlowVec,
+
+                                         vector<double> * BranchesDiameterVec,
+                                         vector<double> * BranchesLengthVec);
 
 };
 
