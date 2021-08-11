@@ -163,7 +163,7 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
                 tree_column_to_id.insert(pair<int, int>(i_column, network[*i_tree].id));
 
-		cout << "Column " << i_column << " corresponds to edge " << tree_column_to_id[i_column] << endl;
+//		cout << "Column " << i_column << " corresponds to edge " << tree_column_to_id[i_column] << endl;
 
                 node source_tree = source(*i_tree, network);
                 node target_tree = target(*i_tree, network);

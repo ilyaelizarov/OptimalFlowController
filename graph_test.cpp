@@ -117,5 +117,17 @@ int main() {
 		&net_diameters,
 		&net_lengths) << std::endl;
 
+	std::cout << "X after 100 iterations:" << std::endl;
+
+	std::cout << NumericalMethods.Solve(Graph.GetTreeAdjMatrix(),
+			Graph.GetChordAdjMatrix(),
+			Graph.GetLoopMatrix(),
+
+			Graph.GetNodesFlow(),
+			Graph.GetInitialChordsFlow(),
+
+			&net_diameters,
+			&net_lengths) << std::endl;
+
 
 }

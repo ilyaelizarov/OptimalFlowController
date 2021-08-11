@@ -51,10 +51,20 @@ class Newton {
 		Matrix<double, Dynamic, 1> Solve(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
                                          Matrix<int, Dynamic, Dynamic> AdjChordMat,
                                          Matrix<int, Dynamic, Dynamic> LoopMat,
-                                         DiagonalMatrix<double, Dynamic> ResMat,
+//                                       DiagonalMatrix<double, Dynamic> ResMat,
 
                                          Matrix<double, Dynamic, 1> NodesFlowVec,
                                          Matrix<double, Dynamic, 1> InitialChordsFlowVec,
+
+                                         vector<double> * BranchesDiameterVec,
+                                         vector<double> * BranchesLengthVec);
+
+		// Calculates S-diagonal matrix
+		DiagonalMatrix<double, Dynamic> GetResMat(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
+                                         Matrix<int, Dynamic, Dynamic> AdjChordMat,
+
+                                         Matrix<double, Dynamic, 1> InitialChordsFlowVec,
+                                         Matrix<double, Dynamic, 1> NodesFlowVec,
 
                                          vector<double> * BranchesDiameterVec,
                                          vector<double> * BranchesLengthVec);

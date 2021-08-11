@@ -85,7 +85,7 @@ Matrix<double, Dynamic, 1> Newton::SolveFlowChords(Matrix<int, Dynamic, Dynamic>
 Matrix<double, Dynamic, 1> Newton::Solve(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
 					 Matrix<int, Dynamic, Dynamic> AdjChordMat,
 					 Matrix<int, Dynamic, Dynamic> LoopMat,
-					 DiagonalMatrix<double, Dynamic> ResMat,
+//					 DiagonalMatrix<double, Dynamic> ResMat,
 
 					 Matrix<double, Dynamic, 1> NodesFlowVec,
 					 Matrix<double, Dynamic, 1> InitialChordsFlowVec,
@@ -93,43 +93,97 @@ Matrix<double, Dynamic, 1> Newton::Solve(Matrix<int, Dynamic, Dynamic> AdjTreeMa
 					 vector<double> * BranchesDiameterVec,
 				         vector<double> * BranchesLengthVec) {
 
-                        Matrix<double, Dynamic, 1> X_c = InitialChordsFlowVec;
+	Matrix<double, Dynamic, 1> X_c = InitialChordsFlowVec;
 
-			// X_0 = A_t^-1 * ( Q - A_c * X_c_0)
-			Matrix<double, Dynamic, 1> X = GetFlowBranches(AdjTreeMat,
-							AdjChordMat,
-							NodesFlowVec,
-							X_c);
-			// Define dH, dX_c
-			Matrix<double, Dynamic, 1> dH = Matrix<double, Dynamic, 1>::Zero(LoopMat.rows(), 1);
-			Matrix<double, Dynamic, 1> dX_c = Matrix<double, Dynamic, 1>::Zero(AdjChordMat.cols(), 1);
+	// S-diagonal matrix
+	DiagonalMatrix<double, Dynamic> ResMat = GetResMat(AdjTreeMat,
+				AdjChordMat,
+				InitialChordsFlowVec,
+				NodesFlowVec,
+				BranchesDiameterVec,
+				BranchesLengthVec);
 
-			for (unsigned int i_iteration = 0; i_iteration != 10; i_iteration++) {
 
-				// dH = B * sign(X) * h(X) [Pa]
-				dH = GetResVec(LoopMat,
-					X,
-					BranchesDiameterVec,
-					BranchesLengthVec);
+	// X_0 = A_t^-1 * ( Q - A_c * X_c_0)
+	Matrix<double, Dynamic, 1> X = GetFlowBranches(AdjTreeMat,
+					AdjChordMat,
+					NodesFlowVec,
+					X_c);
+	// Define dH, dX_c
+	Matrix<double, Dynamic, 1> dH = Matrix<double, Dynamic, 1>::Zero(LoopMat.rows(), 1);
+	Matrix<double, Dynamic, 1> dX_c = Matrix<double, Dynamic, 1>::Zero(AdjChordMat.cols(), 1);
 
-				// dX_c = -dH / (2 * B * S * X * B^T) [m3/s]
-				dX_c = SolveFlowChords(LoopMat,
-						ResMat,
-						X,
-						dH);
+	for (unsigned int i_iteration = 0; i_iteration != 20; i_iteration++) {
 
-				// X_c_plus_1 = X_c + dX_c [m3/s]
-				X_c = X_c + dX_c;
+		// dH = B * sign(X) * h(X) [Pa]
+		dH = GetResVec(LoopMat,
+			X,
+			BranchesDiameterVec,
+			BranchesLengthVec);
+
+		cout << "Iteration: " << i_iteration << endl;
+
+		cout << "dH:" << endl;
+		cout << dH << endl;
+
+		// dX_c = -dH / (2 * B * S * X * B^T) [m3/s]
+		dX_c = SolveFlowChords(LoopMat,
+			ResMat,
+			X,
+			dH);
+
+		cout << "dX_c:" << endl;
+		cout << dX_c << endl;
+
+		// X_c_plus_1 = X_c + dX_c [m3/s]
+		X_c = X_c + dX_c;
+
+		cout << "X_c:" << endl;
+		cout << X_c << endl;
 				
-				// X = A_t^-1 (Q - A_c * X_c)
-				X = GetFlowBranches(AdjTreeMat,
-						AdjChordMat,
-						NodesFlowVec,
-						X_c);
-			}
+		// X = A_t^-1 (Q - A_c * X_c)
+		X = GetFlowBranches(AdjTreeMat,
+			AdjChordMat,
+			NodesFlowVec,
+			X_c);
+
+		cout << "X:" << endl;
+		cout << X << endl;
+	}
 
 	return X;
 
+}
+
+DiagonalMatrix<double, Dynamic> Newton::GetResMat(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
+                                         Matrix<int, Dynamic, Dynamic> AdjChordMat,
+
+					 Matrix<double, Dynamic, 1> InitialChordsFlowVec,
+					 Matrix<double, Dynamic, 1> NodesFlowVec,
+
+                                         vector<double> * BranchesDiameterVec,
+                                         vector<double> * BranchesLengthVec) {
+
+	Matrix<double, Dynamic, 1> X_0 = GetFlowBranches(AdjTreeMat,
+						AdjChordMat,
+				                NodesFlowVec,
+       					        InitialChordsFlowVec);
+
+	// Declare S-vector
+        Matrix<double, Dynamic, 1> ResMatVec = Matrix<double, Dynamic, 1>::Zero((AdjTreeMat.cols() + AdjChordMat.cols()), 1);
+
+        Hydraulics HydraulicMethods;
+
+	for (unsigned int i_branch = 0; i_branch != (AdjTreeMat.cols() + AdjChordMat.cols());
+			i_branch++ ) {
+
+		ResMatVec(i_branch, 0) = HydraulicMethods.pressure_loss(abs(X_0(i_branch, 0)),
+                                (*BranchesDiameterVec).at(i_branch),
+                                (*BranchesLengthVec).at(i_branch)) / pow (X_0(i_branch, 0), 2);
+
+	};
+
+	return ResMatVec.asDiagonal();
 }
 
 Matrix<double, Dynamic, 1> Newton::SolveFlowBranches(Matrix<int, Dynamic, Dynamic> LoopMat,
@@ -159,25 +213,25 @@ Matrix<double, Dynamic, 1> Newton::GetResVec(Matrix<int, Dynamic, Dynamic> LoopM
 		// Get a sign: sgn(X)
 		Matrix<double, Dynamic, 1> SignVec = Matrix<double, Dynamic, 1>::Zero(FlowRateVec.rows(), 1);
 
-		cout << "Sign vector for the flow rates in the branches:" << endl;
+//		cout << "Sign vector for the flow rates in the branches:" << endl;
 
 		for (unsigned int i_branch = 0; i_branch != FlowRateVec.rows();
 		   i_branch++ ) {
 
 			// What to do if FlowRate is 0?
 			SignVec(i_branch, 0) = (FlowRateVec(i_branch, 0) >= 0) ? 1 : -1;
-			cout << SignVec(i_branch, 0) << " ";
+//			cout << SignVec(i_branch, 0) << " ";
 
 		};
 
-		cout << endl;
+//		cout << endl;
 
 		// Pressure loss vector
                 Matrix<double, Dynamic, 1> PressureLossVec = Matrix<double, Dynamic, 1>::Zero(FlowRateVec.rows(), 1);
 
 		Hydraulics HydraulicMethods;
 
-                cout << "Pressure loss vector:" << endl;
+//              cout << "Pressure loss vector:" << endl;
 
                 for (unsigned int i_branch = 0; i_branch != FlowRateVec.rows();
                    i_branch++ ) {
@@ -186,12 +240,12 @@ Matrix<double, Dynamic, 1> Newton::GetResVec(Matrix<int, Dynamic, Dynamic> LoopM
 				(*BranchesDiameter).at(i_branch),
 			       	(*BranchesLength).at(i_branch));
 
-			cout << PressureLossVec(i_branch, 0) << " ";
+//			cout << PressureLossVec(i_branch, 0) << " ";
 
 
                 };
 
-		cout << endl;
+//		cout << endl;
 
 		return LoopMat.cast<double>()*PressureLossVec.cwiseProduct(SignVec);
 
