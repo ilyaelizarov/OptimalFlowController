@@ -2,9 +2,11 @@
  * with the Newton's method */
 
 #include "numerical.h"
+#include "hydraulics.h"
 #include "graph.h"
 #include <iostream>
 #include <vector>
+#include <math.h>
 #include <Eigen/Dense>
 
 using namespace std;
@@ -94,4 +96,39 @@ Matrix<double, Dynamic, 1> Newton::SolveFlowBranches(Matrix<int, Dynamic, Dynami
                                 mCorFlowRateChordVec;
 
                         return FlowRateVec + mCorFlowRateVec;
+}
+
+Matrix<double, Dynamic, 1> Newton::GetResVec(Matrix<int, Dynamic, Dynamic> LoopMat,
+		Matrix<double, Dynamic, 1> FlowRateVec,
+		vector<double> * BranchesDiameter,
+		vector<double> * BranchesLength) {
+
+		// Get a sign: sgn(X)
+		Matrix<double, Dynamic, 1> SignVec = Matrix<double, Dynamic, 1>::Zero(FlowRateVec.rows(), 1);
+
+		for (unsigned int i_branch = 0; i_branch != FlowRateVec.rows();
+		   i_branch++ ) {
+
+			// What to do if FlowRate is 0?
+			SignVec(i_branch, 0) = FlowRateVec(i_branch, 0) /
+				abs(FlowRateVec(i_branch, 0));
+
+		};
+
+		// Pressure loss vector
+                Matrix<double, Dynamic, 1> PressureLossVec = Matrix<double, Dynamic, 1>::Zero(FlowRateVec.rows(), 1);
+
+		Hydraulics HydraulicMethods;
+
+                for (unsigned int i_branch = 0; i_branch != FlowRateVec.rows();
+                   i_branch++ ) {
+
+			PressureLossVec(i_branch, 0) = HydraulicMethods.pressure_loss(abs(FlowRateVec(i_branch, 0)),
+				(*BranchesDiameter).at(i_branch),
+			       	(*BranchesLength).at(i_branch));
+
+                };
+
+		return LoopMat.cast<double>()*PressureLossVec.cwiseProduct(SignVec);
+
 }

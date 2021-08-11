@@ -5,6 +5,7 @@
 #define NUMERICAL_H
 
 #include <Eigen/Dense>
+#include <vector>
 
 using namespace std;
 using namespace Eigen;
@@ -35,6 +36,17 @@ class Newton {
                 Matrix<int, Dynamic, Dynamic> AdjChordMat,
                 Matrix<double, Dynamic, 1>  NodesFlowVec,
 		Matrix<double, Dynamic, 1> ChordsFlowVec);
+
+		/* Calculates pressure drop residuals vector:
+		 * dH = B * sqn(X) * h(X)
+		 * arguments are a loop matrix, flow rate vector,
+		 * diameters and lengths of the branches
+		 */
+		Matrix<double, Dynamic, 1> GetResVec(Matrix<int, Dynamic, Dynamic> LoopMat,
+                	Matrix<double, Dynamic, 1> FlowRateVec,
+                	vector<double> * BranchesDiameter,
+                	vector<double> * BranchesLength);
+
 };
 
 #endif
