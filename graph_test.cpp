@@ -14,22 +14,33 @@ int main() {
 	GraphNetwork Graph;
 
 	// Graph for making a loop matrix
-	// 0 - 1 - 2 - 5 --- 7
-	//     |   |   |     |
-	//     4 - 3 - 6 --- 8
+	// First:
+	// 0 - 1 - 2
+	//     |   |
+	//     4 - 3
+	//
+	// Second: 
+        // 0 - 1 - 2 - 5
+        //     |   |   |
+        //     4 - 3 - 6
+
 
 	// Parameters
-	// string edge_list_str = "(0, 1), (1,  2), (2,5), (5,6), (6,3), (2,3), (4,3), (1,4)";
-	string edge_list_str = "(0, 1), (1,  2), (2,5), (5,6), (6,3), (2,3), (4,3), (1,4), (5,7), (7,8), (8,6)";
+	// First:
+	//string edge_list_str = "(0, 1), (1,  2), (2, 3), (3,4), (4,1)";
+	
+	// Second:
+	string edge_list_str = "(0, 1), (1,  2), (2, 3), (3,4), (4,1), (2,5), (5,6), (6,3)";
+
 
 	
-	string diameter_list_str = "15e-3, 0.020, 0.030, 0.040, 0.025, 0.010, 0.025, 0.05, 0.01 , 0.015, 0.032";
-	// string length_list_str = "7, 4, 3, 4; 5,6, 10e3, 8";
-        string length_list_str = "50, 25, 100, 85; 75, 60, 120, 150, 80, 50, 20";
+	string diameter_list_str = "0.25, 0.5, 0.75, 0.75, 0.1, 0.35, 0.25, 0.25";
+        string length_list_str = "50, 100, 50, 75; 25, 50, 50, 50";
 
 
 	// Inputs
-	std::vector<double> m_flows = {1, 2, 3, 4, -4, -3, -3, 2, 3};
+	// Trying the last two make zero
+	std::vector<double> m_flows = {0.1, 0.3, 0.2, -0.1, -0.5, 0.5, -0.5};
 
 	std::cout << "Edges list:" << std::endl;
 	std::cout << edge_list_str << std::endl;
@@ -56,9 +67,6 @@ int main() {
 	// Parse length list, put data into a container
 	Parse.LengthList(length_list_str, &net_lengths);
 
-	std::cout << "Lengths from the vector: " << std::endl;
-	std::cout << net_diameters.at(0) << std::endl;
-
 	// Populate a network graph
 	Graph.Populate(net_edges, net_diameters, net_lengths);
 	
@@ -71,12 +79,12 @@ int main() {
 	Graph.Print();
 
         // Next inputs
-        m_flows = {0.00069, 0.00111, 0.0016, 0.0027, -0.0022, -0.0011, 0.0019, 0.00055, 0.00083};
+        // m_flows = {0.00069, 0.00111, 0.0016, -0.00069, -0.00271};
 
         // Assign mass flow rates in the nodes
-        Graph.SetNodesFlow(m_flows);
+        //Graph.SetNodesFlow(m_flows);
 
-	Graph.Print();
+	// Graph.Print();
 
 	Graph.SplitTreeAndChords();
 
@@ -104,30 +112,8 @@ int main() {
 
 	Newton NumericalMethods;
 
-	std::cout << NumericalMethods.GetFlowBranches(Graph.GetTreeAdjMatrix(), Graph.GetChordAdjMatrix(),
-			Graph.GetNodesFlow(), Graph.GetInitialChordsFlow()) << std::endl;
-
-	std::cout << "Pressure drop residuals in the cycles:" << std::endl;
-
-	std::cout << NumericalMethods.GetResVec(Graph.GetLoopMatrix(),
-		NumericalMethods.GetFlowBranches(Graph.GetTreeAdjMatrix(),
-		       Graph.GetChordAdjMatrix(),
-                       Graph.GetNodesFlow(),
-		       Graph.GetInitialChordsFlow()),
-		&net_diameters,
-		&net_lengths) << std::endl;
-
-	std::cout << "X after 100 iterations:" << std::endl;
-
-	std::cout << NumericalMethods.Solve(Graph.GetTreeAdjMatrix(),
-			Graph.GetChordAdjMatrix(),
-			Graph.GetLoopMatrix(),
-
-			Graph.GetNodesFlow(),
-			Graph.GetInitialChordsFlow(),
-
+	std::cout << NumericalMethods.Solve(Graph.GetInitialChordsFlow(),
 			&net_diameters,
-			&net_lengths) << std::endl;
-
+                        &net_lengths) << std::endl;
 
 }

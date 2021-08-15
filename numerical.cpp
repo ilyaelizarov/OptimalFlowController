@@ -9,40 +9,42 @@
 #include <math.h>
 #include <Eigen/Dense>
 
+#define CONVERGENCE 1e-10
+
 using namespace std;
 using namespace Eigen;
 
+// Calculates flow rate in the tree branches and adds it to a flow rate in the branches vector
+// along with the flow rate in the chords
 Matrix<double, Dynamic, 1> Newton::GetFlowBranches(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
 		Matrix<int, Dynamic, Dynamic> AdjChordMat,
 		Matrix<double, Dynamic, 1>  NodesFlowVec,
 		Matrix<double, Dynamic, 1> ChordsFlowVec) {
 
-	// The last row must be thrown away
 	unsigned int num_rows = AdjTreeMat.rows()-1;
 	unsigned int num_cols = AdjTreeMat.cols();
 
+        // The last row of the adjacency matrix A_tree for the tree must be thrown away
+	// to avoid singularity
 	AdjTreeMat.block(0, 0, num_rows, num_cols) = 
 		AdjTreeMat.block(0, 0, num_rows, num_cols);
-	
 	AdjTreeMat.conservativeResize(num_rows, num_cols);
-
+	
+	// As well as for the adjacency matrix for the branches A_branch
         num_rows = AdjChordMat.rows()-1;
         num_cols = AdjChordMat.cols();
-
         AdjChordMat.block(0, 0, num_rows, num_cols) =
                 AdjChordMat.block(0, 0, num_rows, num_cols);
-
         AdjChordMat.conservativeResize(num_rows, num_cols);
 
+	// And for the vector that stores flow rates in the nodes Q
 	num_rows = NodesFlowVec.rows()-1;
 	num_cols = NodesFlowVec.cols();
-
         NodesFlowVec.block(0, 0, num_rows, num_cols) =
         NodesFlowVec.block(0, 0, num_rows, num_cols);
-
         NodesFlowVec.conservativeResize(num_rows, num_cols);
 
-	// Solve for X_tree
+	// X_tree = A_tree^-1 (Q - A_chord * X_chord)
 	Matrix<double, Dynamic, 1> X_tree_unsorted = AdjTreeMat.cast<double>().inverse()*(NodesFlowVec - AdjChordMat.cast<double>()*ChordsFlowVec);
 
 	unsigned int tree_num = AdjTreeMat.cols();
@@ -50,6 +52,8 @@ Matrix<double, Dynamic, 1> Newton::GetFlowBranches(Matrix<int, Dynamic, Dynamic>
 
 	Matrix<double, Dynamic, 1> X = Matrix<double, Dynamic, 1>::Zero(tree_num+chords_num, 1);
 
+	// Vector with the flow rates in the branches needs to be sorted according to the id numbers
+	// given to branches when the network graph was populated
 	for (unsigned int i_branch = 0; i_branch != tree_num; i_branch++) {
 
 		X(GraphNetwork::tree_column_to_id[i_branch],0) = X_tree_unsorted(i_branch, 0);
@@ -66,187 +70,142 @@ Matrix<double, Dynamic, 1> Newton::GetFlowBranches(Matrix<int, Dynamic, Dynamic>
 
 }
 
-
+// Calculates the difference for flow rate in the chords dX_chord to perform the next iteration step
 Matrix<double, Dynamic, 1> Newton::SolveFlowChords(Matrix<int, Dynamic, Dynamic> LoopMat,
-                           DiagonalMatrix<double, Dynamic> ResMat,
-                           Matrix<double, Dynamic, 1> FlowRateMat,
-                           Matrix<double, Dynamic, 1> DisVec) const {
+                           DiagonalMatrix<double, Dynamic> ResMatDiag,
+                           DiagonalMatrix<double, Dynamic> FlowRateMatDiag,
+                           Matrix<double, Dynamic, 1> PressureLossResidualsVec) const {
 
-			// Conversion to diagonal matrix
-			DiagonalMatrix<double, Dynamic> FlowRateMatDiag = FlowRateMat.asDiagonal();
-
-                        // Matrices with integers must be casted to double or float
+                        // Matrices with integers must be casted to double or float!
                         Matrix<double, Dynamic, Dynamic> KirchhoffMat = 2*LoopMat.cast<double>()*
-                                ResMat*FlowRateMatDiag*LoopMat.cast<double>().transpose();
+                                ResMatDiag*FlowRateMatDiag*LoopMat.cast<double>().transpose();
 
-                        return KirchhoffMat.colPivHouseholderQr().solve(-DisVec);
+                        // Solves linearized system 2 * B * S * X *B^T * dX_chord = -dH for dX_chord
+                        return KirchhoffMat.colPivHouseholderQr().solve(-PressureLossResidualsVec);
 }
 
-Matrix<double, Dynamic, 1> Newton::Solve(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
-					 Matrix<int, Dynamic, Dynamic> AdjChordMat,
-					 Matrix<int, Dynamic, Dynamic> LoopMat,
-//					 DiagonalMatrix<double, Dynamic> ResMat,
-
-					 Matrix<double, Dynamic, 1> NodesFlowVec,
-					 Matrix<double, Dynamic, 1> InitialChordsFlowVec,
+// Iterates to find a solution for flow rates in all branches until a convergence criteria is met
+Matrix<double, Dynamic, 1> Newton::Solve(Matrix<double, Dynamic, 1> InitialChordsFlowVec,
 
 					 vector<double> * BranchesDiameterVec,
 				         vector<double> * BranchesLengthVec) {
 
-	Matrix<double, Dynamic, 1> X_c = InitialChordsFlowVec;
+	// Initial flow rate in the chords X_chord_0
+	Matrix<double, Dynamic, 1> X_chord = InitialChordsFlowVec;
 
-	// S-diagonal matrix
-	DiagonalMatrix<double, Dynamic> ResMat = GetResMat(AdjTreeMat,
-				AdjChordMat,
-				InitialChordsFlowVec,
-				NodesFlowVec,
-				BranchesDiameterVec,
-				BranchesLengthVec);
+	// Calculates initial flow rate in all branches
+	// as X_0 = A_t^-1 * ( Q - A_c * X_c_0)
+	// Gets adjacency matrices A_tree and A_chord from the GraphNetwork class
+	// as well as flow rates in the nodes as static types
+	Matrix<double, Dynamic, 1> X = GetFlowBranches(GraphNetwork::A_tree_st,
+                                                GraphNetwork::A_chord_st,
+                                                GraphNetwork::Q_st,
+                                                X_chord);
 
+	// Declares resistance vector (S-vector)
+	Matrix<double, Dynamic, 1> S = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::B_st.cols(), 1);
 
-	// X_0 = A_t^-1 * ( Q - A_c * X_c_0)
-	Matrix<double, Dynamic, 1> X = GetFlowBranches(AdjTreeMat,
-					AdjChordMat,
-					NodesFlowVec,
-					X_c);
-	// Define dH, dX_c
-	Matrix<double, Dynamic, 1> dH = Matrix<double, Dynamic, 1>::Zero(LoopMat.rows(), 1);
-	Matrix<double, Dynamic, 1> dX_c = Matrix<double, Dynamic, 1>::Zero(AdjChordMat.cols(), 1);
+	// Declares dH and dX_chord vectors
+	Matrix<double, Dynamic, 1> dH = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::B_st.rows(), 1);
+	Matrix<double, Dynamic, 1> dX_chord = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::A_chord_st.cols(), 1);
 
-	for (unsigned int i_iteration = 0; i_iteration != 20; i_iteration++) {
+	do {
 
-		// dH = B * sign(X) * h(X) [Pa]
-		dH = GetResVec(LoopMat,
-			X,
-			BranchesDiameterVec,
-			BranchesLengthVec);
+		// S = |dP(X, D, L)| / X^2
+		S = GetResVec(X, BranchesDiameterVec, BranchesLengthVec);
+		
+		// Debugging
+		cout << "S:" << endl;
+		cout << S << endl;
 
-		cout << "Iteration: " << i_iteration << endl;
-
+		// dH = B * (sign(X) .* X.^2 .* S)
+		dH = GetPressureLossResidualsVec(X, S);
+				
+		// Debugging			
 		cout << "dH:" << endl;
 		cout << dH << endl;
 
-		// dX_c = -dH / (2 * B * S * X * B^T) [m3/s]
-		dX_c = SolveFlowChords(LoopMat,
-			ResMat,
-			X,
+		// dX_c = (2 * B * S * X * B^T)^-1 * -dH [m3/s]
+		dX_chord = SolveFlowChords(GraphNetwork::B_st,
+			S.asDiagonal(),
+			X.asDiagonal(),
 			dH);
 
-		cout << "dX_c:" << endl;
-		cout << dX_c << endl;
+		// Debugging
+		cout << "dX_chord:" << endl;
+		cout << dX_chord << endl;
 
 		// X_c_plus_1 = X_c + dX_c [m3/s]
-		X_c = X_c + dX_c;
+		X_chord = X_chord + dX_chord;
 
-		cout << "X_c:" << endl;
-		cout << X_c << endl;
+		cout << "X_chord:" << endl;
+		cout << X_chord << endl;
 				
 		// X = A_t^-1 (Q - A_c * X_c)
-		X = GetFlowBranches(AdjTreeMat,
-			AdjChordMat,
-			NodesFlowVec,
-			X_c);
+		X = GetFlowBranches(GraphNetwork::A_tree_st,
+					GraphNetwork::A_chord_st,
+                                        GraphNetwork::Q_st,
+                                        X_chord);
 
 		cout << "X:" << endl;
 		cout << X << endl;
+
 	}
+	while (dX_chord.cwiseAbs().maxCoeff() > CONVERGENCE);
 
 	return X;
 
 }
 
-DiagonalMatrix<double, Dynamic> Newton::GetResMat(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
-                                         Matrix<int, Dynamic, Dynamic> AdjChordMat,
-
-					 Matrix<double, Dynamic, 1> InitialChordsFlowVec,
-					 Matrix<double, Dynamic, 1> NodesFlowVec,
+Matrix<double, Dynamic, 1> Newton::GetResVec(Matrix<double, Dynamic, 1> FlowRateVec,
 
                                          vector<double> * BranchesDiameterVec,
                                          vector<double> * BranchesLengthVec) {
 
-	Matrix<double, Dynamic, 1> X_0 = GetFlowBranches(AdjTreeMat,
-						AdjChordMat,
-				                NodesFlowVec,
-       					        InitialChordsFlowVec);
-
-	// Declare S-vector
-        Matrix<double, Dynamic, 1> ResMatVec = Matrix<double, Dynamic, 1>::Zero((AdjTreeMat.cols() + AdjChordMat.cols()), 1);
+        // Declare S-vector
+        Matrix<double, Dynamic, 1> ResVec = Matrix<double, Dynamic, 1>::Zero(FlowRateVec.rows(), 1);
 
         Hydraulics HydraulicMethods;
 
-	for (unsigned int i_branch = 0; i_branch != (AdjTreeMat.cols() + AdjChordMat.cols());
-			i_branch++ ) {
-
-		ResMatVec(i_branch, 0) = HydraulicMethods.pressure_loss(abs(X_0(i_branch, 0)),
+        for (unsigned int i_branch = 0; i_branch != FlowRateVec.rows(); i_branch++ ) {
+		
+                if (FlowRateVec(i_branch, 0) != 0) {
+			ResVec(i_branch, 0) = HydraulicMethods.pressure_loss(abs(FlowRateVec(i_branch, 0)),
                                 (*BranchesDiameterVec).at(i_branch),
-                                (*BranchesLengthVec).at(i_branch)) / pow (X_0(i_branch, 0), 2);
+                                (*BranchesLengthVec).at(i_branch)) / pow (FlowRateVec(i_branch, 0), 2);
+		} else {
+			ResVec(i_branch, 0) = INFINITY;
+		};
 
-	};
 
-	return ResMatVec.asDiagonal();
+        };
+
+        return ResVec;
 }
 
-Matrix<double, Dynamic, 1> Newton::SolveFlowBranches(Matrix<int, Dynamic, Dynamic> LoopMat,
-                           DiagonalMatrix<double, Dynamic> ResMat,
-                           Matrix<double, Dynamic, 1> FlowRateVec,
-                           Matrix<double, Dynamic, 1> ResVec) {
+Matrix<double, Dynamic, 1> Newton::GetPressureLossResidualsVec(Matrix<double, Dynamic, 1> FlowRateVec,
+		Matrix<double, Dynamic, 1> ResVec) {
 
-                        // Convert flow rate vectror X into a diagonal matrix
-                        DiagonalMatrix<double, Dynamic> mFlowRateMat(FlowRateVec.asDiagonal());
-
-                        // Solve to get a correction for flow rate vector in chords dX_k
-                        Matrix<double, Dynamic, 1> mCorFlowRateChordVec = SolveFlowChords(LoopMat, ResMat,
-                                mFlowRateMat, ResVec);
-
-                        // Transform flow rate correction vector dX_k to correction vector for all branches dX
-                        Matrix<double, Dynamic, 1> mCorFlowRateVec = LoopMat.cast<double>().transpose()*
-                                mCorFlowRateChordVec;
-
-                        return FlowRateVec + mCorFlowRateVec;
-}
-
-Matrix<double, Dynamic, 1> Newton::GetResVec(Matrix<int, Dynamic, Dynamic> LoopMat,
-		Matrix<double, Dynamic, 1> FlowRateVec,
-		vector<double> * BranchesDiameter,
-		vector<double> * BranchesLength) {
-
-		// Get a sign: sgn(X)
+		// A sign vector i.e. sgn(X)
 		Matrix<double, Dynamic, 1> SignVec = Matrix<double, Dynamic, 1>::Zero(FlowRateVec.rows(), 1);
-
-//		cout << "Sign vector for the flow rates in the branches:" << endl;
 
 		for (unsigned int i_branch = 0; i_branch != FlowRateVec.rows();
 		   i_branch++ ) {
 
 			// What to do if FlowRate is 0?
 			SignVec(i_branch, 0) = (FlowRateVec(i_branch, 0) >= 0) ? 1 : -1;
-//			cout << SignVec(i_branch, 0) << " ";
 
 		};
 
-//		cout << endl;
+		// Pressure loss residuals vector
+                Matrix<double, Dynamic, 1> PressureLossResidualsVec = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::B_st.rows(), 1);
 
-		// Pressure loss vector
-                Matrix<double, Dynamic, 1> PressureLossVec = Matrix<double, Dynamic, 1>::Zero(FlowRateVec.rows(), 1);
+		// Flow rates squared vector
+		Matrix<double, Dynamic, 1> FlowRateVecSquared = FlowRateVec.array().pow(2);
 
-		Hydraulics HydraulicMethods;
-
-//              cout << "Pressure loss vector:" << endl;
-
-                for (unsigned int i_branch = 0; i_branch != FlowRateVec.rows();
-                   i_branch++ ) {
-
-			PressureLossVec(i_branch, 0) = HydraulicMethods.pressure_loss(abs(FlowRateVec(i_branch, 0)),
-				(*BranchesDiameter).at(i_branch),
-			       	(*BranchesLength).at(i_branch));
-
-//			cout << PressureLossVec(i_branch, 0) << " ";
+		 PressureLossResidualsVec = GraphNetwork::B_st.cast<double>()*( FlowRateVecSquared.cwiseProduct(ResVec).cwiseProduct(SignVec) );
 
 
-                };
-
-//		cout << endl;
-
-		return LoopMat.cast<double>()*PressureLossVec.cwiseProduct(SignVec);
+		return PressureLossResidualsVec;
 
 }

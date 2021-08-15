@@ -14,9 +14,14 @@ using namespace boost;
 using namespace std;
 using namespace Eigen;
 
-
 map<unsigned int, unsigned int> GraphNetwork::tree_column_to_id;
 map<unsigned int, unsigned int> GraphNetwork::chords_column_to_id;
+
+Matrix<int, Dynamic, Dynamic> GraphNetwork::A_tree_st;
+Matrix<int, Dynamic, Dynamic> GraphNetwork::A_chord_st;
+Matrix<double, Dynamic, 1> GraphNetwork::Q_st;
+Matrix<int, Dynamic, Dynamic> GraphNetwork::B_st;
+
 
 void GraphNetwork::Populate (vector<int_pair> net_edges, vector<double> net_diameters, vector<double> net_lengths) {
 	
@@ -60,6 +65,8 @@ Matrix<double, Dynamic, 1> GraphNetwork::GetNodesFlow(void) {
 		
 		i_row++;
 	}
+
+	Q_st = Q;
 
 	return Q;
 
@@ -120,7 +127,9 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetChordAdjMatrix(void) {
 
 	}
 
-	
+
+	A_chord_st = A_chord;
+
 	return A_chord;
 
 }
@@ -191,6 +200,8 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
         }
 
+
+	A_tree_st = A_tree;
 
         return A_tree;
 
@@ -304,6 +315,9 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetLoopMatrix(void) {
 		// cout << "New cycle" << endl;
 		i_cycle++;
 	}
+
+
+	B_st = B;
 
 	return B;
 }

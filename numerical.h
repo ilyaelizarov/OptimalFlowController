@@ -12,63 +12,50 @@ using namespace Eigen;
 
 class Newton {
 
-		// Solves linearized system 2*B*S*X(N)*B^T*dX_k(N) = -dH for dX_k
+		// Solves linearized system 2 * B * S * X *B^T * dX_chord = -dH for dX_chord
+		// Arguments: a loop matrix B, a resistance vector (matrix) S in the diagonal form,
+		// flow rate in the branches vector (matrix) X in the diagonal form,
+		// pressure loss residuals vector
 		Matrix<double, Dynamic, 1> SolveFlowChords(Matrix<int, Dynamic, Dynamic> LoopMat,
-                           DiagonalMatrix<double, Dynamic> ResMat,
-                           Matrix<double, Dynamic, 1> FlowRateMat,
-                           Matrix<double, Dynamic, 1> DisVec) const;
+                           DiagonalMatrix<double, Dynamic> ResMatDiag,
+                           DiagonalMatrix<double, Dynamic> FlowRateMatDiag,
+                           Matrix<double, Dynamic, 1> PressureLossResidualsVec) const;
 
-	public:
-		// Calculates one iteration for X(N+1)=X(N)+dX
-		Matrix<double, Dynamic, 1> SolveFlowBranches(Matrix<int, Dynamic, Dynamic> LoopMat,
-                           DiagonalMatrix<double, Dynamic> ResMat,
-                           Matrix<double, Dynamic, 1> FlowRateVec,
-                           Matrix<double, Dynamic, 1> ResVec);
+                // Calculates pressure drop residuals vector dH = B * sgn(X) * X^2 * S
+                // Arguments: flow rate in the branches vector, a resistance vector S
+                Matrix<double, Dynamic, 1> GetPressureLossResidualsVec(Matrix<double, Dynamic, 1> FlowRateVec,
+                Matrix<double, Dynamic, 1> ResVec);
 
-		/* Calculates flow rates in the tree
-		 * X_tree = A_tree^-1 (Q - A_chords * X_chords)
-		 * and adds flow rates in the chords from the arguments:
-		 * X_tree + X_chords
-		 * Arguments are adjacency matrices for a tree, chords, the flow rate in nodes
-		 * The function will through the last row itself
-		 */ 
-		Matrix<double, Dynamic, 1> GetFlowBranches(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
+                // Calculates flow rates in the tree branches X_tree = A_tree^-1 (Q - A_chord * X_chord)
+		// and sums them up with the chords X = X_tree + X_chord
+		// Arguments: a tree adjacency matrix A_tree, an adjacency matrix for chords A_chord,
+		// vector of flow rates in the nodes Q, vector with flow rates in the chords X_chord
+                Matrix<double, Dynamic, 1> GetFlowBranches(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
                 Matrix<int, Dynamic, Dynamic> AdjChordMat,
+
                 Matrix<double, Dynamic, 1>  NodesFlowVec,
-		Matrix<double, Dynamic, 1> ChordsFlowVec);
+                Matrix<double, Dynamic, 1> ChordsFlowVec);
 
-		/* Calculates pressure drop residuals vector:
-		 * dH = B * sqn(X) * h(X)
-		 * arguments are a loop matrix, flow rate vector,
-		 * diameters and lengths of the branches
-		 */
-		Matrix<double, Dynamic, 1> GetResVec(Matrix<int, Dynamic, Dynamic> LoopMat,
-                	Matrix<double, Dynamic, 1> FlowRateVec,
-                	vector<double> * BranchesDiameter,
-                	vector<double> * BranchesLength);
-
-		// Iterates to find a solution for flow rates in all branches
-		Matrix<double, Dynamic, 1> Solve(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
-                                         Matrix<int, Dynamic, Dynamic> AdjChordMat,
-                                         Matrix<int, Dynamic, Dynamic> LoopMat,
-//                                       DiagonalMatrix<double, Dynamic> ResMat,
-
-                                         Matrix<double, Dynamic, 1> NodesFlowVec,
-                                         Matrix<double, Dynamic, 1> InitialChordsFlowVec,
+                // Calculates resistance (S-vector) S = |dP(X, D, L)| / X^2
+		// Arguments: flow rate in the branches vector X, pointer to a vector with branches diameter
+		// D, pointer to a vector with lengths of the branches L
+                Matrix<double, Dynamic, 1> GetResVec(Matrix<double, Dynamic, 1> FlowRateVec,
 
                                          vector<double> * BranchesDiameterVec,
                                          vector<double> * BranchesLengthVec);
 
-		// Calculates S-diagonal matrix
-		DiagonalMatrix<double, Dynamic> GetResMat(Matrix<int, Dynamic, Dynamic> AdjTreeMat,
-                                         Matrix<int, Dynamic, Dynamic> AdjChordMat,
 
-                                         Matrix<double, Dynamic, 1> InitialChordsFlowVec,
-                                         Matrix<double, Dynamic, 1> NodesFlowVec,
+	public:
+
+		// Iterates to find a solution for flow rates in all branches
+		// Arguments: initial flow rates in the chords X_chord_0, pointer to a vector with
+		// branches diameter D, pointer to a vector with lengths of the branches L
+		Matrix<double, Dynamic, 1> Solve(Matrix<double, Dynamic, 1> InitialChordsFlowVec,
 
                                          vector<double> * BranchesDiameterVec,
                                          vector<double> * BranchesLengthVec);
 
 };
+
 
 #endif

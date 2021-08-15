@@ -51,6 +51,16 @@ class GraphNetwork {
 	        static map <unsigned int, unsigned int>tree_column_to_id;
                 static map <unsigned int, unsigned int>chords_column_to_id;
 
+		// Adjacency matrices for the tree and chords
+		static Matrix<int, Dynamic, Dynamic> A_tree_st;
+		static Matrix<int, Dynamic, Dynamic> A_chord_st;
+
+		// Loop matrixx
+		static Matrix<int, Dynamic, Dynamic> B_st;
+
+		// Flow rate in the nodes
+		static Matrix<double, Dynamic, 1> Q_st;
+
 		undir_g network;
 
 		// Populates network graph and assigns edges properties (length, index
