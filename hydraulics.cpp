@@ -23,7 +23,8 @@ double Hydraulics::pressure_loss (double Q, double D, double L) const {
 }
 
 double Hydraulics::mFanning (double Re, double D, double Eps) const {
-	return 0.25 / ( pow( log10( (Eps / D) / 3.7 + 5.74 / pow(Re, 0.9) ), 2)  );
+
+	return 0.25 / pow( log10( (Eps / D) / 3.7 + 5.74 / pow(Re, 0.9) ), 2);  ;
 }
 
 double Hydraulics::mDarcy_weisbach(double Fan, double V, double D, double Rho) const {
@@ -31,6 +32,7 @@ double Hydraulics::mDarcy_weisbach(double Fan, double V, double D, double Rho) c
 }
 
 double Hydraulics::mReynolds (double Q, double D, double A, double Rho, double Mu) const {
+	
        return Rho * Q * D / (Mu * A);
 }
 
