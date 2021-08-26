@@ -9,7 +9,7 @@
 #include <math.h>
 #include <Eigen/Dense>
 
-#define CONVERGENCE 1e-10
+#define CONVERGENCE 1e-6
 
 using namespace std;
 using namespace Eigen;
@@ -105,53 +105,79 @@ Matrix<double, Dynamic, 1> Newton::Solve(Matrix<double, Dynamic, 1> InitialChord
 	// Declares resistance vector (S-vector)
 	Matrix<double, Dynamic, 1> S = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::B_st.cols(), 1);
 
-	// Declares dH and dX_chord vectors
-	Matrix<double, Dynamic, 1> dH = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::B_st.rows(), 1);
-	Matrix<double, Dynamic, 1> dX_chord = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::A_chord_st.cols(), 1);
 
+	Matrix<double, Dynamic, 1> A11 = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::B_st.cols(), 1);
+
+	Matrix<int, Dynamic, Dynamic> A21 = GraphNetwork::A_st;
+
+	A21.block(0, 0, A21.rows()-1, A21.cols()) = A21.block(0, 0, A21.rows()-1, A21.cols());
+        A21.conservativeResize(A21.rows()-1, A21.cols());
+
+	Matrix<double, Dynamic, 1> Q_cut = GraphNetwork::Q_st;
+	Q_cut.block(0, 0, Q_cut.rows() - 1 , Q_cut.cols()) = Q_cut.block(0, 0, Q_cut.rows() - 1 , Q_cut.cols());
+        Q_cut.conservativeResize(Q_cut.rows() - 1 , Q_cut.cols());
+
+
+/*	// Declares dH and dX_chord vectors
+	Matrix<double, Dynamic, 1> dH = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::B_st.rows(), 1);
+*/
+	Matrix<double, Dynamic, 1> dX = Matrix<double, Dynamic, 1>::Zero(GraphNetwork::A_chord_st.cols(), 1);
+
+	// Declares M1 matrix: number of rows = rows from B-matrix + rows from A-matrix (left-out)
+	Matrix<double, Dynamic, Dynamic> M1 = Matrix<double, Dynamic, Dynamic>::Zero( (GraphNetwork::B_st.rows() + A21.rows()), GraphNetwork::A_st.cols() );
+
+	// Declares M2 matrix
+	Matrix<double, Dynamic, Dynamic> M2 = Matrix<double, Dynamic, Dynamic>::Zero( (GraphNetwork::B_st.rows() + A21.rows()), 1);
+
+
+	// Uses an algorithm from the article 'A Gradient Algorithm for the Analysis of Pipe Networks' E. Todini, S. Pilati, 1988
+	//
 	do {
 
 		// S = |dP(X, D, L)| / X^2
 		S = GetResVec(X, BranchesDiameterVec, BranchesLengthVec);
 		
-		// Debugging
-		cout << "S:" << endl;
-		cout << S << endl;
+		// A11 matrix: S .* |X|
+		A11 = S.cwiseProduct(X.cwiseAbs());
 
+		// M1 matrix: | M31*A11| where M31 = B, A21 = A (with one row left-out)
+		//            |   A21  |
+		 M1 << GraphNetwork::B_st.cast<double>()*A11.asDiagonal(), A21.cast<double>();
+
+		
+		// M2 matrix: | M31 * A11 * X |  Q with one row left-out
+		// 	      |   A21*X - Q   |
+		 M2 << GraphNetwork::B_st.cast<double>()*A11.asDiagonal()*X, A21.cast<double>()*X - Q_cut; 
+
+		/*
 		// dH = B * (sign(X) .* X.^2 .* S)
 		dH = GetPressureLossResidualsVec(X, S);
 				
-		// Debugging			
-		cout << "dH:" << endl;
-		cout << dH << endl;
-
 		// dX_c = (2 * B * S * X * B^T)^-1 * -dH [m3/s]
 		dX_chord = SolveFlowChords(GraphNetwork::B_st,
 			S.asDiagonal(),
 			X.asDiagonal(),
 			dH);
 
-		// Debugging
-		cout << "dX_chord:" << endl;
-		cout << dX_chord << endl;
-
 		// X_c_plus_1 = X_c + dX_c [m3/s]
 		X_chord = X_chord + dX_chord;
 
-		cout << "X_chord:" << endl;
-		cout << X_chord << endl;
-				
 		// X = A_t^-1 (Q - A_c * X_c)
 		X = GetFlowBranches(GraphNetwork::A_tree_st,
 					GraphNetwork::A_chord_st,
                                         GraphNetwork::Q_st,
                                         X_chord);
+		*/
 
-		cout << "X:" << endl;
-		cout << X << endl;
+		dX = M1.colPivHouseholderQr().solve(M2);
+
+		X = X - dX;
+
+		/* cout << "X:" << endl;
+		cout << X << endl; */
 
 	}
-	while (dX_chord.cwiseAbs().maxCoeff() > CONVERGENCE);
+	while (dX.cwiseAbs().maxCoeff() > CONVERGENCE);
 
 	return X;
 
@@ -169,14 +195,9 @@ Matrix<double, Dynamic, 1> Newton::GetResVec(Matrix<double, Dynamic, 1> FlowRate
 
         for (unsigned int i_branch = 0; i_branch != FlowRateVec.rows(); i_branch++ ) {
 		
-                if (FlowRateVec(i_branch, 0) != 0) {
 			ResVec(i_branch, 0) = HydraulicMethods.pressure_loss(abs(FlowRateVec(i_branch, 0)),
                                 (*BranchesDiameterVec).at(i_branch),
                                 (*BranchesLengthVec).at(i_branch)) / pow (FlowRateVec(i_branch, 0), 2);
-		} else {
-			ResVec(i_branch, 0) = INFINITY;
-		};
-
 
         };
 

@@ -19,6 +19,7 @@ map<unsigned int, unsigned int> GraphNetwork::chords_column_to_id;
 
 Matrix<int, Dynamic, Dynamic> GraphNetwork::A_tree_st;
 Matrix<int, Dynamic, Dynamic> GraphNetwork::A_chord_st;
+Matrix<int, Dynamic, Dynamic> GraphNetwork::A_st;
 Matrix<double, Dynamic, 1> GraphNetwork::Q_st;
 Matrix<int, Dynamic, Dynamic> GraphNetwork::B_st;
 
@@ -79,6 +80,9 @@ void GraphNetwork::SplitTreeAndChords(void) {
 	this->chords_edges_no = 0;
 
 	kruskal_minimum_spanning_tree(network, back_inserter(this->tree), weight_map(get(&edgeProperties::length, network)));
+
+	// Get total edges number
+	this->total_edges_no = this->all_edges.size();
 
 	sort(this->all_edges.begin(), this->all_edges.end());
         sort(this->tree.begin(), this->tree.end());
@@ -144,8 +148,17 @@ Matrix<double, Dynamic, 1> GraphNetwork::GetInitialChordsFlow(void) {
 
 		node source_chord = source(*i_chord, network);
 		node target_chord = target(*i_chord, network);
+
+		if (network[source_chord].m_flow == 0) {
 		
-		if (network[source_chord].m_flow >= network[target_chord].m_flow) {
+			X_c_0(i_edges_chord, 0) = network[target_chord].m_flow;
+		
+		} else if (network[target_chord].m_flow == 0) {
+			
+			X_c_0(i_edges_chord, 0) = network[source_chord].m_flow;
+		
+		} else if (network[source_chord].m_flow >= network[target_chord].m_flow) {
+
 			X_c_0(i_edges_chord, 0) = network[source_chord].m_flow;
 
 		} else {
@@ -162,13 +175,42 @@ Matrix<double, Dynamic, 1> GraphNetwork::GetInitialChordsFlow(void) {
 
 }
 
+
+Matrix<int, Dynamic, Dynamic> GraphNetwork::GetAdjMatrix(void) {
+
+	Matrix<int, Dynamic, Dynamic> A = Matrix<int, Dynamic, Dynamic>::Zero(num_vertices(network), total_edges_no);
+
+	for (vector<branch>::iterator i_branch=this->all_edges.begin(); i_branch != this->all_edges.end(); ++i_branch) {
+
+                node source_branch = source(*i_branch, network);
+                node target_branch = target(*i_branch, network);
+
+                if (network[source_branch].m_flow >= network[target_branch].m_flow) {
+
+                        A(source_branch, network[*i_branch].id) = 1;
+                        A(target_branch, network[*i_branch].id) = -1;
+
+                } else {
+
+                       A(source_branch, network[*i_branch].id) = -1;
+                       A(target_branch, network[*i_branch].id) = 1;
+                }
+
+        }
+
+        A_st = A;
+
+        return A;
+
+}
+
 Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
 
 	int i_column = 0;
 
-        Matrix<int, Dynamic, Dynamic> A_tree = Matrix<int, Dynamic, Dynamic>::Zero(num_vertices(network), tree_edges_no) ;
-
-        for (vector<branch>::iterator i_tree=this->tree.begin(); i_tree !=this->tree.end(); ++i_tree) {
+        Matrix<int, Dynamic, Dynamic> A_tree = Matrix<int, Dynamic, Dynamic>::Zero(num_vertices(network), tree_edges_no);
+        
+	for (vector<branch>::iterator i_tree=this->tree.begin(); i_tree !=this->tree.end(); ++i_tree) {
 
                 tree_column_to_id.insert(pair<int, int>(i_column, network[*i_tree].id));
 

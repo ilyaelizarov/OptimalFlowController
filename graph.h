@@ -43,19 +43,21 @@ class GraphNetwork {
 	vector<branch> tree;
 	vector<branch> chords;
 
-	int tree_edges_no = 0;
-	int chords_edges_no = 0;
+	unsigned int total_edges_no = 0; 
+	unsigned int tree_edges_no = 0;
+	unsigned int chords_edges_no = 0;
 
 	public:
 
 	        static map <unsigned int, unsigned int>tree_column_to_id;
                 static map <unsigned int, unsigned int>chords_column_to_id;
 
-		// Adjacency matrices for the tree and chords
+		// Adjacency matrices for the tree, chords, and a joined one
 		static Matrix<int, Dynamic, Dynamic> A_tree_st;
 		static Matrix<int, Dynamic, Dynamic> A_chord_st;
+		static Matrix<int, Dynamic, Dynamic> A_st;
 
-		// Loop matrixx
+		// Loop matrix
 		static Matrix<int, Dynamic, Dynamic> B_st;
 
 		// Flow rate in the nodes
@@ -79,6 +81,7 @@ class GraphNetwork {
 		void SplitTreeAndChords(void);
 
 		// Gets adjacency matrix for chords and tree
+		Matrix<int, Dynamic, Dynamic> GetAdjMatrix(void);
 		Matrix<int, Dynamic, Dynamic> GetChordAdjMatrix(void);
                 Matrix<int, Dynamic, Dynamic> GetTreeAdjMatrix(void);
 

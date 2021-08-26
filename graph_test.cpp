@@ -40,7 +40,7 @@ int main() {
 
 	// Inputs
 	// Trying the last two make zero
-	std::vector<double> m_flows = {0.1, 0.3, 0.2, -0.1, -0.5, 0.5, -0.5};
+	std::vector<double> m_flows = {0.1, 0.3, 0.2, -0.1, -0.5, 0.03, -0.03};
 
 	std::cout << "Edges list:" << std::endl;
 	std::cout << edge_list_str << std::endl;
@@ -90,6 +90,9 @@ int main() {
 
 	Graph.PrintTree();
 
+	std::cout << "A: " << std::endl;
+	std::cout << Graph.GetAdjMatrix() << std::endl;
+
 	std::cout << "A_chord: " << std::endl;
 
 	std::cout << Graph.GetChordAdjMatrix() << std::endl;
@@ -111,6 +114,8 @@ int main() {
 	std::cout << Graph.GetLoopMatrix() << std::endl;
 
 	Newton NumericalMethods;
+
+	std::cout << "X: " << std::endl;
 
 	std::cout << NumericalMethods.Solve(Graph.GetInitialChordsFlow(),
 			&net_diameters,
