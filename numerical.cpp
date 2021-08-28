@@ -149,26 +149,6 @@ Matrix<double, Dynamic, 1> Newton::Solve(Matrix<double, Dynamic, 1> InitialChord
 		// 	      |   A21*X - Q   |
 		 M2 << GraphNetwork::B_st.cast<double>()*A11.asDiagonal()*X, A21.cast<double>()*X - Q_cut; 
 
-		/*
-		// dH = B * (sign(X) .* X.^2 .* S)
-		dH = GetPressureLossResidualsVec(X, S);
-				
-		// dX_c = (2 * B * S * X * B^T)^-1 * -dH [m3/s]
-		dX_chord = SolveFlowChords(GraphNetwork::B_st,
-			S.asDiagonal(),
-			X.asDiagonal(),
-			dH);
-
-		// X_c_plus_1 = X_c + dX_c [m3/s]
-		X_chord = X_chord + dX_chord;
-
-		// X = A_t^-1 (Q - A_c * X_c)
-		X = GetFlowBranches(GraphNetwork::A_tree_st,
-					GraphNetwork::A_chord_st,
-                                        GraphNetwork::Q_st,
-                                        X_chord);
-		*/
-
 		dX = M1.colPivHouseholderQr().solve(M2);
 
 		X = X - dX;

@@ -3,10 +3,12 @@
 #include "numerical.h"
 #include "parser.h"
 #include "graph.h"
+#include <Eigen/Dense>
 #include <boost/graph/adjacency_list.hpp>
 #include <iostream>
 
 using namespace boost;
+using namespace Eigen;
 
 int main() {
 
@@ -115,10 +117,54 @@ int main() {
 
 	Newton NumericalMethods;
 
-	std::cout << "X: " << std::endl;
-
-	std::cout << NumericalMethods.Solve(Graph.GetInitialChordsFlow(),
+	Matrix<double, Dynamic, 1> X = NumericalMethods.Solve(Graph.GetInitialChordsFlow(),
 			&net_diameters,
-                        &net_lengths) << std::endl;
+                        &net_lengths);
+      
+        std::cout << "X: " << std::endl;
+	std::cout << X << std::endl;
+
+	std::cout << "Assigning flow rates from X to the edges... ";
+
+	Graph.SetEdgesFlow(X);
+	
+	std::cout << "done" << std::endl;
+
+	std::cout << "Filling A_eq matrix and b-vector... ";
+
+	std::vector<vector<double>> A_eq;
+	std::vector<double> b;
+
+	Graph.GetFlowConstraints(&A_eq, &b);
+
+        std::cout << "done" << std::endl;
+
+	std::cout << "A_eq:" << std::endl;
+
+	// Prints A_eq matrix
+	for (std::vector< std::vector<double> >::iterator i_counter = A_eq.begin();
+         i_counter != A_eq.end(); i_counter++) {
+
+        	for (std::vector<double>::iterator i_row_counter = (*i_counter).begin(); i_row_counter != (*i_counter).end();
+                i_row_counter++) {
+
+			std::cout << *i_row_counter << ' ';
+
+        	}
+
+	std::cout << std::endl;
+
+	}
+
+        std::cout << "b^T:" << std::endl;
+
+	// Prints b-vector
+	for (std::vector<double>::iterator i_counter = b.begin(); i_counter != b.end(); i_counter++) {
+
+                std::cout << *i_counter << ' ';
+
+        }
+
+	std::cout << std::endl;
 
 }

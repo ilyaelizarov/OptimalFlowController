@@ -16,18 +16,19 @@ class GraphNetwork {
 
 	typedef pair<int, int> int_pair;
 
-	// Bundled properties for nodes and edges
+	// Bundled properties for nodes
 	struct nodeProperties {
         	unsigned int id; // Node no.
         	double m_flow; // Flow rate in the node
 	};
 
+	// Bundled properties for edges
 	struct edgeProperties {
         	unsigned int id; // Edge no.
 		double diameter; // Edge diameter
         	double length; // Length of the edge
-		unsigned int source;
-		// unsigned int target;
+		unsigned int source; // For setting direction, the source node is assigned
+		double pressure_loss; // pressure losses for calculated flow rate
 	};
 
         // Undirected graph type
@@ -89,7 +90,13 @@ class GraphNetwork {
 		Matrix<double, Dynamic, 1> GetInitialChordsFlow(void);
 
 		// Gets loop matrix
-		Matrix<int, Dynamic, Dynamic> GetLoopMatrix(void);  
+		Matrix<int, Dynamic, Dynamic> GetLoopMatrix(void);
+
+		// Sets flow rates in the edges
+		void SetEdgesFlow(Matrix<double, Dynamic, 1> FlowRates);
+
+		// Fills an equality constraint matrix and a vector for A_eq * X = b
+		void GetFlowConstraints(vector<vector<double>> * A_eq, vector<double> * b);
 
 		// Prints tree
 		void PrintTree(void);

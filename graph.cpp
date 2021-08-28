@@ -2,6 +2,7 @@
 
 #include "graph.h"
 #include "udgcd.hpp"
+#include "hydraulics.h"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/range.hpp>
@@ -49,7 +50,11 @@ void GraphNetwork::SetNodesFlow(vector<double> m_flows) {
 
 	for (node i_vertex : make_iterator_range(vertices(network))) {
 
+		// Assigns flow rate for a vertex
                 network[i_vertex].m_flow = m_flows.at(i_flows);
+		
+		// Assigns id for a vertex
+		network[i_vertex].id = i_flows;
                 i_flows++;
         }
 }
@@ -175,6 +180,67 @@ Matrix<double, Dynamic, 1> GraphNetwork::GetInitialChordsFlow(void) {
 
 }
 
+void GraphNetwork::SetEdgesFlow(Matrix<double, Dynamic, 1> FlowRates) {
+
+        Hydraulics HydraulicMethods;
+
+	for (vector<branch>::iterator i_branch=this->all_edges.begin(); i_branch != this->all_edges.end(); ++i_branch) {
+
+		network[*i_branch].pressure_loss = HydraulicMethods.pressure_loss(
+				abs(FlowRates[ network[*i_branch].id,0]),
+				network[*i_branch].diameter,
+				network[*i_branch].length);
+	}
+
+	
+}
+
+void GraphNetwork::GetFlowConstraints(vector<vector<double>> * A_eq, vector<double> * b) {
+
+	vector<double> A_eq_row = {0};
+
+        A_eq_row.resize(num_vertices(network));
+
+	for (vector<branch>::iterator i_tree=this->tree.begin(); i_tree !=this->tree.end(); ++i_tree) {
+
+		// b = 2 * dH
+		b->push_back(2*network[*i_tree].pressure_loss);
+
+                node source_tree = source(*i_tree, network);
+                node target_tree = target(*i_tree, network);
+
+		if (network[source_tree].m_flow > 0) {
+
+			A_eq_row.at(network[source_tree].id) = 1;
+
+		} else {
+
+			A_eq_row.at(network[source_tree].id) = pow(network[source_tree].m_flow, 2);
+
+		}
+
+
+		if (network[target_tree].m_flow > 0) {
+
+                        A_eq_row.at(network[target_tree].id) = -1;
+
+
+                } else {
+
+                        A_eq_row.at(network[target_tree].id) = -pow(network[target_tree].m_flow, 2);
+
+                }
+
+	A_eq->push_back(A_eq_row);
+
+	fill(A_eq_row.begin(), A_eq_row.end(), 0.0);
+
+        }
+
+
+
+}
+
 
 Matrix<int, Dynamic, Dynamic> GraphNetwork::GetAdjMatrix(void) {
 
@@ -225,7 +291,6 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
                         A_tree(source_tree, i_column) = 1;
                         A_tree(target_tree, i_column) = -1;
                         network[*i_tree].source = source_tree;
-                        // network[*i_tree].target = target_tree;
 
 
                 } else {
@@ -233,8 +298,6 @@ Matrix<int, Dynamic, Dynamic> GraphNetwork::GetTreeAdjMatrix(void) {
                        A_tree(source_tree, i_column) = -1;
                        A_tree(target_tree, i_column) = 1;
                        network[*i_tree].source = target_tree;
-                       // network[*i_tree].target = source_tree;
-
 
                 }
 
